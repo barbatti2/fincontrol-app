@@ -1,16 +1,4 @@
-As duas questões foram identificadas e corrigidas no seu código:
-1. Alteração de valores em Contas Recorrentes por Mês
- * Causa do problema: Quando você editava uma conta recorrente na visualização do mês (ex: Julho), o código estava alterando a propriedade global do modelo da conta (state.recurring). Com isso, todos os meses presentes e futuros herdavam o novo valor.
- * Solução aplicada: Criamos uma estrutura de sobreposições mensais (recurringOverrides). Agora, ao editar uma conta recorrente dentro da aba "Contas do mês", o valor (e data/observação) é alterado apenas para aquele mês específico. Os demais meses continuarão com o valor padrão ou com os seus próprios valores individuais. Se quiser alterar o valor/dados padrão globais da conta, basta editá-la diretamente na aba "Recorrentes".
-2. Botão de Excluir
- * Causa do problema:
-   * A área de clique (padding: 2px + SVG pequeno) era muito reduzida (~20px), tornando quase impossível acertar o toque em telas sensíveis ao toque (smartphones).
-   * Os eventos de clique dentro do ícone SVG estavam sofrendo interferência de captura.
- * Solução aplicada:
-   * Aumentamos a área de toque dos botões de ação para no mínimo 36x36px com pointer-events: none nos SVGs internos, garantindo que o clique seja detectado no primeiro toque.
-   * Ao clicar em excluir uma conta recorrente na tela do mês, o aplicativo agora oferece duas opções claras: "Remover apenas deste mês" ou "Excluir de todos os meses".
-Aqui está o seu arquivo index.html completo e atualizado com as correções:
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
