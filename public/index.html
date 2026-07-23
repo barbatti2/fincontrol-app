@@ -565,26 +565,6 @@ function seedData(){
   };
 }
 
-let state = null;
-
-async function loadState(){
-  try{
-    const res = await window.storage.get(STORAGE_KEY, false);
-    if(res && res.value){ state = JSON.parse(res.value); return; }
-    throw new Error('sem dados salvos');
-  }catch(e){
-    state = seedData();
-    await saveState();
-  }
-}
-
-async function saveState(){
-  try{
-    const res = await window.storage.set(STORAGE_KEY, JSON.stringify(state), false);
-    if(!res){ console.error('Falha ao salvar dados'); }
-  }catch(e){ console.error('Erro ao salvar dados:', e); }
-}
-
 function uid(){ return 'id_' + Math.random().toString(36).slice(2,10); }
 
 /* ==========================================================================
