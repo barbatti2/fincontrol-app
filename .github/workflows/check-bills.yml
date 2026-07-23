@@ -1,0 +1,29 @@
+name: Verificar contas vencendo
+
+on:
+  schedule:
+    - cron: '0 12 * * *'   # 09:00 no horário de Brasília (UTC-3)
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependências
+        working-directory: scripts
+        run: npm install
+
+      - name: Salvar chave de serviço do Firebase
+        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > $HOME/gcp-key.json
+
+      - name: Rodar verificação de contas vencendo
+        working-directory: scripts
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /home/runner/gcp-key.json
+        run: node check-bills.js
