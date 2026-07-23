@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -142,15 +142,9 @@
   .bill-status.paid{ color:var(--green); }
 
   .bill-actions-row{ display:flex; align-items:center; justify-content:space-between; margin-top:11px; padding-top:11px; border-top:1px solid var(--border); }
-  .bill-icon-actions{ display:flex; gap:8px; }
-  .icon-action{ 
-    background:none; border:none; cursor:pointer; color:#b3bdba; padding:8px; 
-    display:inline-flex; align-items:center; justify-content:center;
-    min-width:36px; min-height:36px; border-radius:8px; touch-action:manipulation;
-  }
-  .icon-action:active{ background:rgba(0,0,0,.06); color:var(--red); }
-  .icon-action svg{ pointer-events:none; }
-
+  .bill-icon-actions{ display:flex; gap:12px; }
+  .icon-action{ background:none; border:none; cursor:pointer; color:#b3bdba; padding:2px; display:flex; }
+  .icon-action:active{ opacity:.55; }
   .btn-pagar{
     background:var(--primary); color:#fff; border:none; border-radius:10px; padding:8px 16px;
     font-weight:700; font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer;
@@ -189,7 +183,7 @@
   .rec-card .info .name{ font-weight:700; font-size:15px; }
   .rec-card .info .sub{ color:var(--muted); font-size:12.5px; margin-top:2px; }
   .rec-card .value{ font-weight:800; font-size:15px; white-space:nowrap; }
-  .rec-card .rec-actions{ display:flex; gap:6px; margin-left:2px; flex-shrink:0; }
+  .rec-card .rec-actions{ display:flex; gap:10px; margin-left:2px; flex-shrink:0; }
 
   /* ---------- Modals ---------- */
   .overlay{
@@ -214,7 +208,6 @@
     width:100%; border:1px solid #e2e5eb; border-radius:12px; padding:12px 13px;
     font-size:15.5px; color:var(--text); background:#fbfbfd;
   }
-  .field input:disabled{ background:#f0f2f5; opacity:.8; }
   .field textarea{ resize:vertical; min-height:64px; }
   .field input:focus, .field textarea:focus{ outline:2px solid var(--primary); outline-offset:1px; }
   .btn-primary{
@@ -419,10 +412,7 @@
   <div class="modal confirm-modal">
     <h2>Excluir conta</h2>
     <p id="deleteMessage">Deseja realmente excluir "<b id="deleteName"></b>"? Esta ação não pode ser desfeita.</p>
-    <div style="display:flex; flex-direction:column; gap:8px;">
-      <button class="btn-primary btn-danger" id="deleteConfirm">Excluir</button>
-      <button class="btn-primary btn-danger hidden" id="deleteAllConfirm">Excluir de todos os meses</button>
-    </div>
+    <button class="btn-primary btn-danger" id="deleteConfirm">Excluir</button>
     <button class="btn-cancel" data-close="modalDelete">Cancelar</button>
   </div>
 </div>
@@ -477,6 +467,11 @@ function addMonths(mk, delta){
 
 /* ==========================================================================
    ESTADO
+   -------------------------------------------------------------------------
+   As contas recorrentes NÃO são copiadas por mês: elas são calculadas na
+   hora (getMonthBills), a partir do cadastro em `recurring`. Isso garante
+   que editar ou excluir uma conta recorrente afete automaticamente TODOS
+   os meses, sem deixar cópias "presas" pra trás.
    ========================================================================== */
 let state = null;
 
@@ -497,9 +492,7 @@ function seedData(){
     },
     recurringStatus: {
       r4: { '2026-07': true }
-    },
-    recurringOverrides: {},
-    recurringExclusions: {}
+    }
   };
 }
 
@@ -512,9 +505,7 @@ async function loadState(){
         currentMonth: data.currentMonth || monthKey(new Date()),
         recurring: data.recurring || [],
         oneOffBills: data.oneOffBills || {},
-        recurringStatus: data.recurringStatus || {},
-        recurringOverrides: data.recurringOverrides || {},
-        recurringExclusions: data.recurringExclusions || {}
+        recurringStatus: data.recurringStatus || {}
       };
       return;
     }
@@ -533,9 +524,7 @@ async function saveState(){
       currentMonth: state.currentMonth,
       recurring: state.recurring,
       oneOffBills: state.oneOffBills,
-      recurringStatus: state.recurringStatus,
-      recurringOverrides: state.recurringOverrides || {},
-      recurringExclusions: state.recurringExclusions || {}
+      recurringStatus: state.recurringStatus
     });
   }catch(e){
     console.error('Erro ao salvar no Firestore:', e);
@@ -547,31 +536,18 @@ function uid(){ return 'id_' + Math.random().toString(36).slice(2,10); }
 
 /**
  * Retorna a lista "achatada" de contas de um mês: as manuais (oneOffBills)
- * mais as recorrentes computadas na hora com suas devidas sobreposições mensais.
+ * mais as recorrentes computadas na hora a partir do cadastro.
  */
 function getMonthBills(monthKey){
   const manual = (state.oneOffBills[monthKey] || []).map(b => ({ ...b, origin:'manual' }));
   const recurring = state.recurring
     .filter(r => r.startMonth <= monthKey)
-    .filter(r => !(state.recurringExclusions && state.recurringExclusions[r.id] && state.recurringExclusions[r.id][monthKey]))
     .map(r => {
-      const defaultDay = pad2(Math.min(r.day, 28));
+      const day = pad2(Math.min(r.day, 28));
       const paid = !!(state.recurringStatus[r.id] && state.recurringStatus[r.id][monthKey]);
-      const override = (state.recurringOverrides && state.recurringOverrides[r.id] && state.recurringOverrides[r.id][monthKey]) || {};
-
-      const value = override.value !== undefined ? override.value : r.value;
-      const due = override.due || `${monthKey}-${defaultDay}`;
-      const note = override.note !== undefined ? override.note : (r.note || '');
-
       return {
-        id: `rec_${r.id}_${monthKey}`,
-        templateId: r.id,
-        name: r.name,
-        value: value,
-        due: due,
-        note: note,
-        paid: paid,
-        origin: 'recurring'
+        id: `rec_${r.id}_${monthKey}`, templateId: r.id, name: r.name, value: r.value,
+        due: `${monthKey}-${day}`, note: r.note, paid, origin:'recurring'
       };
     });
   return [...manual, ...recurring];
@@ -618,7 +594,7 @@ function billStatus(bill){
   return due < todayISO() ? 'late' : 'pending';
 }
 
-/* Ícone por categoria */
+/* Ícone por categoria (baseado no nome da conta) */
 const ICONS = {
   water: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.7s6 6.5 6 11a6 6 0 01-12 0c0-4.5 6-11 6-11z"/></svg>`,
   card: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>`,
@@ -792,21 +768,20 @@ document.getElementById('monthLabelWrap').addEventListener('click', ()=>{
 });
 
 /* ==========================================================================
-   FORM — NOVA / EDITAR CONTA DO MÊS
+   FORM — NOVA / EDITAR CONTA DO MÊS (manual)
    ========================================================================== */
 const billNameEl = document.getElementById('billName');
 const billValueEl = document.getElementById('billValue');
 const billDueEl = document.getElementById('billDue');
 const billNoteEl = document.getElementById('billNote');
 attachCurrencyMask(billValueEl);
-let editingBillContext = null; // { origin: 'manual'|'recurring', id?: string, templateId?: string }
+let editingBillId = null;
 
 document.getElementById('btnNewBill').addEventListener('click', ()=>{
-  editingBillContext = null;
+  editingBillId = null;
   document.getElementById('modalBillTitle').textContent = 'Nova conta';
   document.getElementById('billSubmit').textContent = 'Adicionar';
   billNameEl.value = '';
-  billNameEl.disabled = false;
   setCurrencyValue(billValueEl, null);
   billDueEl.value = `${state.currentMonth}-10`;
   billNoteEl.value = '';
@@ -816,69 +791,38 @@ document.getElementById('btnNewBill').addEventListener('click', ()=>{
 function openEditBill(id){
   const bill = (state.oneOffBills[state.currentMonth]||[]).find(b=>b.id===id);
   if(!bill) return;
-  editingBillContext = { origin: 'manual', id: id };
+  editingBillId = id;
   document.getElementById('modalBillTitle').textContent = 'Editar conta';
   document.getElementById('billSubmit').textContent = 'Salvar';
   billNameEl.value = bill.name;
-  billNameEl.disabled = false;
   setCurrencyValue(billValueEl, bill.value);
   billDueEl.value = bill.due;
   billNoteEl.value = bill.note || '';
   openModal('modalBill');
 }
 
-function openEditMonthRecurring(templateId){
-  const rec = state.recurring.find(r=>r.id===templateId);
-  if(!rec) return;
-  editingBillContext = { origin: 'recurring', templateId: templateId };
-
-  const override = (state.recurringOverrides[templateId] && state.recurringOverrides[templateId][state.currentMonth]) || {};
-  const val = override.value !== undefined ? override.value : rec.value;
-  const defaultDay = pad2(Math.min(rec.day, 28));
-  const due = override.due || `${state.currentMonth}-${defaultDay}`;
-  const note = override.note !== undefined ? override.note : (rec.note || '');
-
-  document.getElementById('modalBillTitle').textContent = 'Editar conta do mês';
-  document.getElementById('billSubmit').textContent = 'Salvar neste mês';
-  billNameEl.value = rec.name;
-  billNameEl.disabled = true;
-  setCurrencyValue(billValueEl, val);
-  billDueEl.value = due;
-  billNoteEl.value = note;
-  openModal('modalBill');
-}
-
 document.getElementById('billSubmit').addEventListener('click', ()=>{
   const name = billNameEl.value.trim();
-  if(!editingBillContext || editingBillContext.origin === 'manual'){
-    if(!name){ showToast('Informe um nome para a conta'); return; }
-  }
+  if(!name){ showToast('Informe um nome para a conta'); return; }
   if(!billDueEl.value){ showToast('Informe a data de vencimento'); return; }
   const value = getCurrencyCents(billValueEl);
   const due = billDueEl.value;
-  const note = billNoteEl.value.trim();
+  const dueMonth = due.slice(0,7);
+  if(!state.oneOffBills[dueMonth]) state.oneOffBills[dueMonth] = [];
 
-  if(editingBillContext && editingBillContext.origin === 'recurring'){
-    const tid = editingBillContext.templateId;
-    if(!state.recurringOverrides[tid]) state.recurringOverrides[tid] = {};
-    state.recurringOverrides[tid][state.currentMonth] = { value, due, note };
-  }else if(editingBillContext && editingBillContext.origin === 'manual'){
+  if(editingBillId){
     const arr = state.oneOffBills[state.currentMonth] || [];
-    const idx = arr.findIndex(b=>b.id===editingBillContext.id);
+    const idx = arr.findIndex(b=>b.id===editingBillId);
     if(idx>-1){
-      const dueMonth = due.slice(0,7);
       const bill = arr[idx];
-      bill.name=name; bill.value=value; bill.due=due; bill.note=note;
+      bill.name=name; bill.value=value; bill.due=due; bill.note=billNoteEl.value.trim();
       if(dueMonth !== state.currentMonth){
         arr.splice(idx,1);
-        if(!state.oneOffBills[dueMonth]) state.oneOffBills[dueMonth] = [];
         state.oneOffBills[dueMonth].push(bill);
       }
     }
   }else{
-    const dueMonth = due.slice(0,7);
-    if(!state.oneOffBills[dueMonth]) state.oneOffBills[dueMonth] = [];
-    state.oneOffBills[dueMonth].push({ id:uid(), name, value, due, note, paid:false });
+    state.oneOffBills[dueMonth].push({ id:uid(), name, value, due, note:billNoteEl.value.trim(), paid:false });
   }
   saveState();
   renderMonth();
@@ -887,7 +831,10 @@ document.getElementById('billSubmit').addEventListener('click', ()=>{
 });
 
 /* ==========================================================================
-   FORM — NOVA / EDITAR CONTA RECORRENTE (aba de recorrentes)
+   FORM — NOVA / EDITAR CONTA RECORRENTE
+   -------------------------------------------------------------------------
+   Editar aqui reflete AUTOMATICAMENTE em todos os meses (passados e
+   futuros), pois as contas recorrentes são calculadas na hora.
    ========================================================================== */
 const recNameEl = document.getElementById('recName');
 const recValueEl = document.getElementById('recValue');
@@ -992,73 +939,36 @@ document.getElementById('undoConfirm').addEventListener('click', ()=>{
 
 /* ==========================================================================
    EXCLUIR
+   -------------------------------------------------------------------------
+   Excluir uma conta recorrente (seja pela aba Recorrentes, seja pelo ícone
+   numa conta do mês) remove ela de TODOS os meses, porque não existem
+   cópias — é só o cadastro sendo apagado.
    ========================================================================== */
-let deleteTarget = null; // { type:'bill'|'rec'|'rec_month', id, name, monthKey? }
-
+let deleteTarget = null; // { type:'bill'|'rec', id, monthKey? }
 function openDeleteModal(type, id, name, monthKeyForBill){
-  deleteTarget = { type, id, name, monthKey: monthKeyForBill };
+  deleteTarget = { type, id, monthKey: monthKeyForBill };
   document.getElementById('deleteName').textContent = name;
-
-  const btnConfirm = document.getElementById('deleteConfirm');
-  const btnAll = document.getElementById('deleteAllConfirm');
-
-  if(type === 'rec_month'){
-    document.getElementById('deleteMessage').innerHTML = `Como deseja excluir a conta "<b>${escapeHtml(name)}</b>"?`;
-    btnConfirm.textContent = 'Remover apenas deste mês';
-    btnAll.textContent = 'Excluir de todos os meses';
-    btnAll.classList.remove('hidden');
-  }else if(type === 'rec'){
-    document.getElementById('deleteMessage').innerHTML = `Deseja realmente excluir a conta recorrente "<b>${escapeHtml(name)}</b>"? Ela sumirá de todos os meses.`;
-    btnConfirm.textContent = 'Excluir conta recorrente';
-    btnAll.classList.add('hidden');
-  }else{
-    document.getElementById('deleteMessage').innerHTML = `Deseja realmente excluir "<b>${escapeHtml(name)}</b>"? Esta ação não pode ser desfeita.`;
-    btnConfirm.textContent = 'Excluir';
-    btnAll.classList.add('hidden');
-  }
+  document.getElementById('deleteMessage').innerHTML = type === 'rec'
+    ? `Deseja realmente excluir a conta recorrente "<b>${escapeHtml(name)}</b>"? Ela vai sumir de todos os meses (passados e futuros).`
+    : `Deseja realmente excluir "<b>${escapeHtml(name)}</b>"? Esta ação não pode ser desfeita.`;
   openModal('modalDelete');
 }
-
 document.getElementById('deleteConfirm').addEventListener('click', ()=>{
   if(!deleteTarget) return;
   if(deleteTarget.type === 'bill'){
     const arr = state.oneOffBills[deleteTarget.monthKey] || [];
     const idx = arr.findIndex(b=>b.id===deleteTarget.id);
     if(idx>-1) arr.splice(idx,1);
-  }else if(deleteTarget.type === 'rec_month'){
-    const tid = deleteTarget.id;
-    if(!state.recurringExclusions[tid]) state.recurringExclusions[tid] = {};
-    state.recurringExclusions[tid][deleteTarget.monthKey] = true;
-  }else if(deleteTarget.type === 'rec'){
-    const tid = deleteTarget.id;
-    const idx = state.recurring.findIndex(r=>r.id===tid);
+  }else{
+    const idx = state.recurring.findIndex(r=>r.id===deleteTarget.id);
     if(idx>-1) state.recurring.splice(idx,1);
-    delete state.recurringStatus[tid];
-    delete state.recurringOverrides[tid];
-    delete state.recurringExclusions[tid];
+    delete state.recurringStatus[deleteTarget.id];
   }
   saveState();
   renderMonth();
   renderRecurring();
   closeModal('modalDelete');
   showToast('Excluído com sucesso');
-  deleteTarget = null;
-});
-
-document.getElementById('deleteAllConfirm').addEventListener('click', ()=>{
-  if(!deleteTarget) return;
-  const tid = deleteTarget.id;
-  const idx = state.recurring.findIndex(r=>r.id===tid);
-  if(idx>-1) state.recurring.splice(idx,1);
-  delete state.recurringStatus[tid];
-  delete state.recurringOverrides[tid];
-  delete state.recurringExclusions[tid];
-
-  saveState();
-  renderMonth();
-  renderRecurring();
-  closeModal('modalDelete');
-  showToast('Conta recorrente excluída de todos os meses');
   deleteTarget = null;
 });
 
@@ -1073,10 +983,10 @@ document.getElementById('billsList').addEventListener('click', (e)=>{
   if(pay) openPayModal(pay.dataset.pay, pay.dataset.origin, pay.dataset.templateId, pay.dataset.name);
   else if(undo) openUndoModal(undo.dataset.undo, undo.dataset.origin, undo.dataset.templateId, undo.dataset.name);
   else if(edit){
-    if(edit.dataset.origin === 'recurring') openEditMonthRecurring(edit.dataset.templateId);
+    if(edit.dataset.origin === 'recurring') openEditRec(edit.dataset.templateId);
     else openEditBill(edit.dataset.editBill);
   }else if(del){
-    if(del.dataset.origin === 'recurring') openDeleteModal('rec_month', del.dataset.templateId, del.dataset.name, state.currentMonth);
+    if(del.dataset.origin === 'recurring') openDeleteModal('rec', del.dataset.templateId, del.dataset.name);
     else openDeleteModal('bill', del.dataset.delBill, del.dataset.name, state.currentMonth);
   }
 });
@@ -1089,7 +999,7 @@ document.getElementById('recurringList').addEventListener('click', (e)=>{
 });
 
 /* ==========================================================================
-   SERVICE WORKER + FIREBASE CLOUD MESSAGING
+   SERVICE WORKER + FIREBASE CLOUD MESSAGING (100% automático)
    ========================================================================== */
 let swRegistration = null;
 async function registerServiceWorker(){
