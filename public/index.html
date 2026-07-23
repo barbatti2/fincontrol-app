@@ -7,32 +7,29 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FinControl">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#4C6EF5">
+<meta name="theme-color" content="#2FA79A">
 <title>FinControl</title>
-<link rel="manifest" href='data:application/manifest+json,{"name":"FinControl","short_name":"FinControl","start_url":".","display":"standalone","background_color":"%234C6EF5","theme_color":"%234C6EF5"}'>
+<link rel="manifest" href='data:application/manifest+json,{"name":"FinControl","short_name":"FinControl","start_url":".","display":"standalone","background_color":"%232FA79A","theme_color":"%232FA79A"}'>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --navy:#4C6EF5;
-    --navy-soft:#7B93F8;
-    --bg:#f4f6fb;
+    --primary:#2FA79A;
+    --primary-dark:#238077;
+    --primary-light:#DFF3F0;
+    --bg:#F5FAF9;
     --card:#ffffff;
     --red:#e5484d;
-    --red-soft:#fce8e8;
-    --amber:#e8a23d;
-    --amber-soft:#fbf0dd;
+    --amber:#d99425;
     --green:#1fb977;
-    --green-soft:#dcf5e9;
-    --text:#101828;
-    --muted:#8991a1;
-    --border:#eceff3;
+    --text:#0f2622;
+    --muted:#8a9a97;
+    --border:#e9f1ef;
     --gap:12px;
-    --radius:14px;
+    --radius:16px;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html{ scrollbar-gutter: stable; }
   html,body{ touch-action: manipulation; overscroll-behavior-y: contain; }
   body{
     margin:0;
@@ -40,130 +37,120 @@
     background:var(--bg);
     color:var(--text);
     min-height:100vh;
-    padding-bottom:32px;
+    padding-bottom:36px;
     -webkit-font-smoothing:antialiased;
   }
   input, textarea, select, button{ font-family:inherit; touch-action: manipulation; }
-  input[type="text"], input[type="number"], input[type="month"], input[type="date"], textarea{ font-size:16px; }
+  input[type="text"], input[type="number"], input[type="date"], textarea{ font-size:16px; }
 
   /* ---------- Header ---------- */
   header.topbar{
-    background:var(--navy);
-    color:#fff;
-    padding:14px 18px;
+    position:relative;
+    background:linear-gradient(135deg,#3BB2A4,#238077);
+    padding:14px 18px 26px;
     padding-top:calc(14px + env(safe-area-inset-top, 0px));
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    position:sticky; top:0; z-index:30;
+    display:flex; align-items:center; justify-content:space-between;
   }
-  header.topbar .brand{ display:flex; align-items:center; gap:10px; font-weight:800; font-size:18px; letter-spacing:-.2px; }
-  header.topbar .brand .icon-box{
-    width:34px;height:34px;border-radius:9px;background:var(--navy-soft);
-    display:flex;align-items:center;justify-content:center;
-  }
-  header.topbar .actions{ display:flex; gap:8px; }
+  header.topbar .brand{ color:#fff; font-weight:800; font-size:19px; letter-spacing:-.2px; }
   .icon-btn{
     width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
     display:flex;align-items:center;justify-content:center;
-    background:var(--navy-soft); color:#fff; transition:.15s;
+    background:rgba(255,255,255,.18); color:#fff;
   }
-  .icon-btn.active{ background:#fff; color:var(--navy); }
   .icon-btn:active{ transform:scale(.92); }
-
-  /* ---------- Tabs ---------- */
-  .tabbar{
-    position:sticky; top:var(--header-h, 66px); z-index:29;
-    background:var(--bg);
-    display:flex; gap:6px; padding:10px 16px 8px;
-    max-width:560px; margin:0 auto; width:100%;
-  }
-  .tab-btn{
-    flex:1; border:none; background:#e7eaf0; color:var(--muted); font-weight:700; font-size:14px;
-    padding:11px 10px; border-radius:11px; cursor:pointer; transition:.15s;
-  }
-  .tab-btn.active{ background:var(--navy); color:#fff; }
+  .header-wave{ position:absolute; left:0; right:0; bottom:-1px; width:100%; height:26px; display:block; }
 
   main{ max-width:560px; margin:0 auto; padding:6px 16px 0; min-height:60vh; }
+  .page-title{ text-align:center; font-size:21px; font-weight:800; margin:14px 0 12px; letter-spacing:-.3px; }
+
+  /* ---------- Drawer ---------- */
+  .drawer-overlay{
+    position:fixed; inset:0; background:rgba(15,38,34,.45); z-index:90;
+    display:none; opacity:0; transition:opacity .2s;
+  }
+  .drawer-overlay.show{ display:block; opacity:1; }
+  .drawer{
+    position:fixed; top:0; left:0; bottom:0; width:78%; max-width:300px;
+    background:#fff; z-index:91; padding:26px 18px; padding-top:calc(26px + env(safe-area-inset-top,0px));
+    transform:translateX(-100%); transition:transform .22s ease;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .drawer-overlay.show .drawer{ transform:translateX(0); }
+  .drawer-title{ font-weight:800; font-size:19px; color:var(--primary-dark); margin-bottom:16px; }
+  .drawer-link{
+    text-align:left; background:none; border:none; padding:13px 12px; border-radius:11px;
+    font-size:15px; font-weight:600; color:var(--text); cursor:pointer; display:flex; align-items:center; gap:10px;
+  }
+  .drawer-link.active{ background:var(--primary-light); color:var(--primary-dark); }
 
   /* ---------- Month nav ---------- */
   .month-nav{
-    background:var(--navy); color:#fff; border-radius:var(--radius);
-    display:flex; align-items:center; justify-content:space-between;
-    padding:13px 14px; margin:10px 0 var(--gap);
+    display:flex; align-items:center; justify-content:center; gap:18px; margin-bottom:16px;
   }
   .month-nav button{
-    background:none;border:none;color:#fff;font-size:20px;cursor:pointer;
-    width:30px;height:30px;display:flex;align-items:center;justify-content:center;
-    opacity:.85;
+    background:none;border:none;color:var(--primary-dark);font-size:22px;cursor:pointer;
+    width:32px;height:32px;display:flex;align-items:center;justify-content:center;
   }
-  .month-nav button:active{ opacity:1; }
   .month-nav .label{
-    font-weight:700; font-size:16.5px; display:flex; align-items:center; gap:8px;
-    cursor:pointer; padding:5px 10px; border-radius:9px; position:relative;
+    font-weight:700; font-size:16px; color:var(--text); position:relative; cursor:pointer;
+    padding:4px 8px;
   }
-  .month-nav input[type="month"]{
-    position:absolute; inset:0; opacity:0; width:100%; height:100%; border:none; cursor:pointer;
-  }
+  .month-nav input[type="month"]{ position:absolute; inset:0; opacity:0; cursor:pointer; }
 
-  /* ---------- Summary ---------- */
-  .summary-row{ display:grid; grid-template-columns:1fr 1fr; gap:var(--gap); margin-bottom:var(--gap); }
+  /* ---------- Summary card ---------- */
   .summary-card{
-    border-radius:var(--radius); padding:14px; color:#fff; display:flex; align-items:center; gap:11px;
+    background:#fff; border-radius:20px; padding:20px 8px 30px; margin-bottom:18px;
+    display:flex; position:relative; overflow:hidden;
+    box-shadow:0 2px 14px rgba(20,60,55,.06);
   }
-  .summary-card.pay{ background:linear-gradient(135deg,#f0555c,#f2984c); }
-  .summary-card.paid{ background:linear-gradient(135deg,#2fce9f,#1fb977); }
-  .summary-card .icon{
-    width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.26);
-    display:flex;align-items:center;justify-content:center; flex-shrink:0;
-  }
-  .summary-card .lab{ font-size:12.5px; opacity:.95; line-height:1.2; }
-  .summary-card .val{ font-size:19px; font-weight:800; line-height:1.3; }
+  .summary-card .col{ flex:1; text-align:center; }
+  .summary-card .divider{ width:1px; background:var(--border); }
+  .summary-card .lab{ font-size:13.5px; color:var(--muted); margin-bottom:6px; }
+  .summary-card .lab.pay{ color:var(--red); font-weight:700; }
+  .summary-card .lab.paid{ color:var(--green); font-weight:700; }
+  .summary-card .val{ font-size:23px; font-weight:800; letter-spacing:-.3px; }
+  .summary-wave{ position:absolute; left:0; right:0; bottom:0; width:100%; height:34px; opacity:.18; }
 
   .btn-new{
-    width:100%; background:var(--navy); color:#fff; border:none; border-radius:var(--radius);
-    padding:14px; font-size:15px; font-weight:700; display:flex; align-items:center;
-    justify-content:center; gap:8px; cursor:pointer; margin-bottom:var(--gap);
+    width:100%; background:var(--primary); color:#fff; border:none; border-radius:var(--radius);
+    padding:15px; font-size:15.5px; font-weight:700; display:flex; align-items:center;
+    justify-content:center; gap:8px; cursor:pointer; margin-bottom:18px; box-shadow:0 4px 14px rgba(47,167,154,.3);
   }
-  .btn-new:active{ opacity:.85; }
+  .btn-new:active{ opacity:.88; }
+
+  .section-title{ font-size:15px; font-weight:800; margin:4px 2px 12px; }
 
   /* ---------- Bill card ---------- */
   #billsList{ display:flex; flex-direction:column; gap:var(--gap); }
   .bill-card{
-    background:var(--card); border-radius:var(--radius); padding:14px 15px;
-    position:relative;
-    border:1px solid var(--border);
-    border-left:4px solid var(--muted);
+    background:var(--card); border-radius:var(--radius); padding:13px 14px;
+    box-shadow:0 1px 6px rgba(20,60,55,.05);
   }
-  .bill-card.late{ border-left-color:var(--red); }
-  .bill-card.pending{ border-left-color:var(--amber); }
-  .bill-card.paid{ border-left-color:var(--green); }
+  .bill-top{ display:flex; align-items:center; gap:12px; }
+  .bill-avatar{
+    width:44px; height:44px; border-radius:50%; background:var(--primary-light); color:var(--primary-dark);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .bill-info{ flex:1; min-width:0; }
+  .bill-name{ font-weight:700; font-size:15px; }
+  .bill-due{ color:var(--muted); font-size:12.5px; margin-top:1px; }
+  .bill-right{ text-align:right; flex-shrink:0; }
+  .bill-value{ font-size:15.5px; font-weight:800; }
+  .bill-status{ font-size:12px; font-weight:700; margin-top:2px; }
+  .bill-status.late{ color:var(--red); }
+  .bill-status.pending{ color:var(--amber); }
+  .bill-status.paid{ color:var(--green); }
 
-  .bill-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
-  .bill-name-row{ display:flex; align-items:flex-start; gap:8px; min-width:0; }
-  .bill-name-row svg{ flex-shrink:0; margin-top:1px; }
-  .bill-name{ font-weight:700; font-size:15.5px; line-height:1.3; }
-  .bill-due{ color:var(--muted); font-size:13px; margin-top:1px; }
-  .bill-actions{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
-  .pill{ font-size:12px; font-weight:700; padding:4px 10px; border-radius:20px; white-space:nowrap; }
-  .pill.late{ background:var(--red-soft); color:#c0342f; }
-  .pill.pending{ background:var(--amber-soft); color:#9c6707; }
-  .pill.paid{ background:var(--green-soft); color:#158a5c; }
-  .icon-action{ background:none; border:none; cursor:pointer; color:#a3aab8; padding:2px; display:flex; }
+  .bill-actions-row{ display:flex; align-items:center; justify-content:space-between; margin-top:11px; padding-top:11px; border-top:1px solid var(--border); }
+  .bill-icon-actions{ display:flex; gap:12px; }
+  .icon-action{ background:none; border:none; cursor:pointer; color:#b3bdba; padding:2px; display:flex; }
   .icon-action:active{ opacity:.55; }
-
-  .bill-bottom{ display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
-  .bill-value{ font-size:21px; font-weight:800; letter-spacing:-.3px; }
-  .bill-note{ display:flex; align-items:flex-start; gap:6px; color:var(--muted); font-size:13px; margin-top:9px; padding-top:9px; border-top:1px solid var(--border); }
-  .bill-note svg{ flex-shrink:0; margin-top:1px; }
-
   .btn-pagar{
-    background:var(--navy); color:#fff; border:none; border-radius:10px; padding:9px 16px;
-    font-weight:700; font-size:13.5px; display:flex; align-items:center; gap:7px; cursor:pointer;
+    background:var(--primary); color:#fff; border:none; border-radius:10px; padding:8px 16px;
+    font-weight:700; font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer;
   }
-  .btn-pagar:active{ opacity:.85; }
   .btn-undo{
-    background:none; border:none; color:var(--muted); font-weight:600; font-size:13.5px;
+    background:none; border:none; color:var(--muted); font-weight:600; font-size:13px;
     display:flex; align-items:center; gap:6px; cursor:pointer;
   }
 
@@ -171,60 +158,45 @@
   .empty-state .icon{ font-size:34px; margin-bottom:10px; }
 
   /* ---------- Recurring view ---------- */
-  .rec-header{ padding:14px 0 6px; text-align:center; display:flex; flex-direction:column; align-items:center; }
+  .rec-header{ padding:6px 0 6px; text-align:center; display:flex; flex-direction:column; align-items:center; }
   .rec-header .rec-icon{
-    width:46px; height:46px; border-radius:13px; background:var(--navy); color:#fff;
-    display:flex; align-items:center; justify-content:center; margin-bottom:10px;
+    width:56px; height:56px; border-radius:50%; background:var(--primary-light); color:var(--primary-dark);
+    display:flex; align-items:center; justify-content:center; margin-bottom:12px;
   }
-  .rec-header h1{ font-size:20px; margin:0 0 6px; letter-spacing:-.3px; }
-  .rec-header p{ color:var(--muted); margin:0 auto 16px; font-size:13.5px; line-height:1.45; max-width:320px; }
+  .rec-header p{ color:var(--muted); margin:0 auto 18px; font-size:13.5px; line-height:1.5; max-width:300px; }
   .btn-small{
-    background:var(--navy); color:#fff; border:none; border-radius:12px; padding:13px 20px;
+    background:var(--primary); color:#fff; border:none; border-radius:13px; padding:14px 20px;
     font-weight:700; font-size:14.5px; display:inline-flex; align-items:center; justify-content:center; gap:8px;
-    cursor:pointer; white-space:nowrap; width:100%; max-width:340px; margin:0 auto 22px;
+    cursor:pointer; width:100%; max-width:340px; margin:0 auto 22px; box-shadow:0 4px 14px rgba(47,167,154,.3);
   }
-  .stats-row{ display:grid; grid-template-columns:1fr 1fr; gap:var(--gap); margin-bottom:18px; }
+  .stats-row{ display:grid; grid-template-columns:1fr 1fr; gap:var(--gap); margin-bottom:20px; }
   .stat-card{ border:1px solid var(--border); border-radius:var(--radius); padding:16px 14px; background:#fff; text-align:center; }
   .stat-card .lab{ color:var(--muted); font-size:12.5px; margin-bottom:7px; }
-  .stat-card .val{ font-size:20px; font-weight:800; letter-spacing:-.3px; }
-  .rec-list-title{ font-size:13px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; margin:4px 2px 10px; }
+  .stat-card .val{ font-size:20px; font-weight:800; letter-spacing:-.3px; color:var(--primary-dark); }
 
   #recurringList{ display:flex; flex-direction:column; gap:var(--gap); }
   .rec-card{
-    background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:13px 14px;
+    background:#fff; border-radius:var(--radius); padding:13px 14px; box-shadow:0 1px 6px rgba(20,60,55,.05);
     display:flex; align-items:center; gap:12px;
-  }
-  .rec-card .cal-icon{
-    width:42px;height:42px;border-radius:11px;background:#eef0f4;flex-shrink:0;
-    display:flex;align-items:center;justify-content:center;
   }
   .rec-card .info{ flex:1; min-width:0; }
   .rec-card .info .name{ font-weight:700; font-size:15px; }
-  .rec-card .info .sub{ color:var(--muted); font-size:12.5px; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .rec-card .value{ font-weight:800; font-size:15.5px; white-space:nowrap; }
-  .rec-card .rec-actions{ display:flex; gap:8px; margin-left:4px; flex-shrink:0; }
-
-  .info-banner{
-    display:flex; gap:10px; align-items:flex-start; background:#eef2ff; border:1px solid #dce3fb;
-    border-radius:12px; padding:12px 13px; margin-bottom:var(--gap); color:#3a4a8a; font-size:13px; line-height:1.4;
-  }
-  .info-banner svg{ flex-shrink:0; margin-top:1px; }
+  .rec-card .info .sub{ color:var(--muted); font-size:12.5px; margin-top:2px; }
+  .rec-card .value{ font-weight:800; font-size:15px; white-space:nowrap; }
+  .rec-card .rec-actions{ display:flex; gap:10px; margin-left:2px; flex-shrink:0; }
 
   /* ---------- Modals ---------- */
   .overlay{
-    position:fixed; inset:0; background:rgba(15,23,41,.5); display:none;
+    position:fixed; inset:0; background:rgba(15,38,34,.5); display:none;
     align-items:flex-end; justify-content:center; z-index:100;
   }
   .overlay.show{ display:flex; }
   .modal{
-    background:#fff; width:100%; max-width:560px; border-radius:20px 20px 0 0;
+    background:#fff; width:100%; max-width:560px; border-radius:22px 22px 0 0;
     padding:22px 20px 26px; animation:slideUp .18s ease;
     max-height:88vh; overflow-y:auto;
   }
-  @media (min-width:600px){
-    .overlay{ align-items:center; }
-    .modal{ border-radius:20px; }
-  }
+  @media (min-width:600px){ .overlay{ align-items:center; } .modal{ border-radius:22px; } }
   @keyframes slideUp{ from{ transform:translateY(24px); opacity:0;} to{ transform:translateY(0); opacity:1;} }
   .modal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
   .modal-head h2{ font-size:19px; margin:0; letter-spacing:-.3px; }
@@ -233,13 +205,13 @@
   .field label{ display:block; font-weight:600; font-size:13.5px; margin-bottom:6px; color:#333; }
   .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:11px; }
   .field input, .field textarea{
-    width:100%; border:1px solid #e2e5eb; border-radius:11px; padding:12px 13px;
+    width:100%; border:1px solid #e2e5eb; border-radius:12px; padding:12px 13px;
     font-size:15.5px; color:var(--text); background:#fbfbfd;
   }
   .field textarea{ resize:vertical; min-height:64px; }
-  .field input:focus, .field textarea:focus{ outline:2px solid var(--navy); outline-offset:1px; }
+  .field input:focus, .field textarea:focus{ outline:2px solid var(--primary); outline-offset:1px; }
   .btn-primary{
-    width:100%; background:var(--navy); color:#fff; border:none; border-radius:13px;
+    width:100%; background:var(--primary); color:#fff; border:none; border-radius:14px;
     padding:15px; font-size:15.5px; font-weight:700; cursor:pointer; margin-top:2px;
   }
   .btn-primary:active{ opacity:.85; }
@@ -250,8 +222,8 @@
   }
   .confirm-modal{ text-align:center; }
   .confirm-modal .badge-icon{
-    width:58px;height:58px;border-radius:50%;background:var(--green-soft);
-    display:flex;align-items:center;justify-content:center;margin:0 auto 14px; color:var(--green);
+    width:58px;height:58px;border-radius:50%;background:var(--primary-light);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 14px; color:var(--primary-dark);
   }
   .confirm-modal h2{ margin:0 0 6px; font-size:19px; }
   .confirm-modal p{ color:var(--muted); margin:0 0 20px; font-size:14.5px; line-height:1.4; }
@@ -259,7 +231,7 @@
 
   .toast{
     position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
-    background:var(--navy); color:#fff; padding:11px 18px; border-radius:11px;
+    background:var(--primary-dark); color:#fff; padding:11px 18px; border-radius:12px;
     font-size:14px; font-weight:600; z-index:200; opacity:0; pointer-events:none;
     transition:opacity .25s, transform .25s; box-shadow:0 6px 20px rgba(0,0,0,.2);
     max-width:88vw; text-align:center;
@@ -272,47 +244,47 @@
 <body>
 
 <header class="topbar">
-  <div class="brand">
-    <span class="icon-box">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><circle cx="17" cy="15" r="1.5" fill="currentColor" stroke="none"/></svg>
-    </span>
-    FinControl
-  </div>
-  <div class="actions">
-    <button class="icon-btn" id="btnSettings" title="Configurações">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-    </button>
-  </div>
+  <button class="icon-btn" id="btnMenu" aria-label="Menu">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+  </button>
+  <div class="brand">FinControl</div>
+  <button class="icon-btn" id="btnBell" aria-label="Notificações">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+  </button>
+  <svg class="header-wave" viewBox="0 0 500 40" preserveAspectRatio="none"><path d="M0,18 C150,42 350,-8 500,18 L500,40 L0,40 Z" fill="var(--bg)"/></svg>
 </header>
 
-<div class="tabbar">
-  <button class="tab-btn active" id="tabMonth">Contas do mês</button>
-  <button class="tab-btn" id="tabRecurring">Recorrentes</button>
+<div class="drawer-overlay" id="drawerOverlay">
+  <nav class="drawer" id="drawer">
+    <div class="drawer-title">FinControl</div>
+    <button class="drawer-link active" data-view="month">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Contas do mês
+    </button>
+    <button class="drawer-link" data-view="recurring">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-9-9 9 9 0 019 9z"/><path d="M12 7v5l3 2"/></svg>
+      Recorrentes
+    </button>
+  </nav>
 </div>
 
 <main>
-
-  <!-- ===== VIEW: Contas do mês ===== -->
   <section id="viewMonth">
+    <h1 class="page-title">Contas do mês</h1>
     <div class="month-nav">
       <button id="prevMonth" aria-label="Mês anterior">‹</button>
       <div class="label" id="monthLabelWrap">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        <span id="monthLabel">Julho/2026</span>
+        <span id="monthLabel">Julho / 2026</span>
         <input type="month" id="monthPicker">
       </div>
       <button id="nextMonth" aria-label="Próximo mês">›</button>
     </div>
 
-    <div class="summary-row">
-      <div class="summary-card pay">
-        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-        <div><div class="lab">A pagar</div><div class="val" id="totalToPay">R$ 0,00</div></div>
-      </div>
-      <div class="summary-card paid">
-        <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>
-        <div><div class="lab">Pago</div><div class="val" id="totalPaid">R$ 0,00</div></div>
-      </div>
+    <div class="summary-card">
+      <div class="col"><div class="lab pay">A pagar</div><div class="val" id="totalToPay">R$ 0,00</div></div>
+      <div class="divider"></div>
+      <div class="col"><div class="lab paid">Pagas</div><div class="val" id="totalPaid">R$ 0,00</div></div>
+      <svg class="summary-wave" viewBox="0 0 500 40" preserveAspectRatio="none"><path d="M0,25 C150,0 350,45 500,15 L500,40 L0,40 Z" fill="var(--primary)"/></svg>
     </div>
 
     <button class="btn-new" id="btnNewBill">
@@ -320,17 +292,17 @@
       Nova conta
     </button>
 
+    <div class="section-title">Próximas contas</div>
     <div id="billsList"></div>
   </section>
 
-  <!-- ===== VIEW: Contas recorrentes ===== -->
   <section id="viewRecurring" class="hidden">
     <div class="rec-header">
       <div class="rec-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
       </div>
-      <h1>Contas recorrentes</h1>
-      <p>Cadastre aqui suas contas fixas mensais. Elas passam a aparecer automaticamente todo mês, a partir do mês atual.</p>
+      <h1 class="page-title" style="margin:0 0 8px;">Recorrentes</h1>
+      <p>Cadastre aqui suas contas fixas mensais. Elas aparecem automaticamente todo mês.</p>
       <button class="btn-small" id="btnNewRecurring">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         Nova conta recorrente
@@ -340,10 +312,9 @@
       <div class="stat-card"><div class="lab">Contas cadastradas</div><div class="val" id="recCount">0</div></div>
       <div class="stat-card"><div class="lab">Total estimado</div><div class="val" id="recTotal">R$ 0,00</div></div>
     </div>
-    <div class="rec-list-title">Suas contas</div>
+    <div class="section-title">Suas contas recorrentes</div>
     <div id="recurringList"></div>
   </section>
-
 </main>
 
 <!-- Modal: Nova/editar conta do mês -->
@@ -387,10 +358,6 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
     </div>
-    <div class="info-banner">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-      <span>Essa conta passa a aparecer automaticamente todo mês, a partir do mês atual.</span>
-    </div>
     <div class="field">
       <label>Nome</label>
       <input type="text" id="recName" placeholder="Ex: Conta de água">
@@ -418,7 +385,7 @@
 <div class="overlay" id="modalPay">
   <div class="modal confirm-modal">
     <div class="badge-icon">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><circle cx="12" cy="15" r="3"/><path d="M12 14v1.5l1 .5"/></svg>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
     </div>
     <h2>Marcar como pago?</h2>
     <p>Confirmar o pagamento de <b id="payBillName"></b>?</p>
@@ -427,31 +394,26 @@
   </div>
 </div>
 
+<!-- Modal: confirmar desfazer -->
+<div class="overlay" id="modalUndo">
+  <div class="modal confirm-modal">
+    <div class="badge-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1015-6.7L3 13"/></svg>
+    </div>
+    <h2>Desfazer pagamento?</h2>
+    <p>Confirmar que deseja desfazer o pagamento de <b id="undoBillName"></b>?</p>
+    <button class="btn-primary" id="undoConfirm">Desfazer pagamento</button>
+    <button class="btn-cancel" data-close="modalUndo">Cancelar</button>
+  </div>
+</div>
+
 <!-- Modal: excluir -->
 <div class="overlay" id="modalDelete">
   <div class="modal confirm-modal">
     <h2>Excluir conta</h2>
-    <p>Deseja realmente excluir "<b id="deleteName"></b>"? Esta ação não pode ser desfeita.</p>
+    <p id="deleteMessage">Deseja realmente excluir "<b id="deleteName"></b>"? Esta ação não pode ser desfeita.</p>
     <button class="btn-primary btn-danger" id="deleteConfirm">Excluir</button>
     <button class="btn-cancel" data-close="modalDelete">Cancelar</button>
-  </div>
-</div>
-
-<!-- Modal: configurações -->
-<div class="overlay" id="modalSettings">
-  <div class="modal">
-    <div class="modal-head">
-      <h2>Configurações</h2>
-      <button class="modal-close" data-close="modalSettings">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div class="field">
-      <label>Notificações de vencimento</label>
-      <p style="color:var(--muted); font-size:13.5px; margin:0 0 12px; line-height:1.5;">Avisos do tipo "sua conta vence em 1 dia", enviados 3 dias e 1 dia antes do vencimento — via Firebase Cloud Messaging, funcionam mesmo com o app fechado, desde que o site já esteja publicado (Firebase Hosting) e a função agendada esteja ativa.</p>
-      <button class="btn-primary" id="btnEnableNotif">Ativar notificações</button>
-      <div id="notifStatus" style="text-align:center; font-size:13px; color:var(--muted); margin-top:10px;"></div>
-    </div>
   </div>
 </div>
 
@@ -462,15 +424,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/fireba
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging.js";
+
 /* ==========================================================================
-   CONFIGURAÇÃO DO FIREBASE (opcional)
-   --------------------------------------------------------------------------
-   Este app usa armazenamento local (window.storage) por padrão.
-   Para conectar ao Firestore no futuro:
-   1) Adicione os SDKs do Firebase (App + Firestore) via <script type="module">
-   2) Preencha o objeto abaixo com as credenciais do seu projeto
-   3) Substitua as funções loadState()/saveState() para ler/escrever no
-      Firestore (ex: coleção "users/{uid}/fincontrol") em vez do window.storage
+   FIREBASE
    ========================================================================== */
 const firebaseConfig = {
   apiKey: "AIzaSyDAHZEjirkb5ililKMim-2CDJ3lvyt87FE",
@@ -481,23 +437,13 @@ const firebaseConfig = {
   appId: "1:690750174567:web:1e45e728f7785279cc2bc2",
   measurementId: "G-3PN1QCHM07"
 };
-// Chave VAPID (Configurações do projeto > Cloud Messaging > Certificados push da Web)
 const VAPID_KEY = "BD6_Xv24zSQ462udzx_s_PjoF8qkp_2yPek5G0yMCs_vvaCEf8hWWUYkz8-nkmDENAibMMGtzXdQiVX36slRydA";
 
 const fbApp = initializeApp(firebaseConfig);
 const fbAuth = getAuth(fbApp);
 const db = getFirestore(fbApp);
-let fbMessaging = null; // inicializado depois de checarmos suporte do navegador
+let fbMessaging = null;
 let currentUid = null;
-// (Integração real do Firebase fica pendente até as chaves serem informadas.)
-
-
-/* ==========================================================================
-   ESTADO / DADOS
-   ========================================================================== */
-const STORAGE_KEY = 'fincontrol-data-v2'; // mantido como chave do documento local de fallback
-
-let state = null;
 
 async function ensureSignedIn(){
   return new Promise((resolve) => {
@@ -508,12 +454,59 @@ async function ensureSignedIn(){
   });
 }
 
+/* ==========================================================================
+   UTILITÁRIOS DE DATA
+   ========================================================================== */
+function pad2(n){ return String(n).padStart(2,'0'); }
+function monthKey(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`; }
+function todayISO(){ const t=new Date(); t.setHours(0,0,0,0); return t; }
+function addMonths(mk, delta){
+  const [y,m] = mk.split('-').map(Number);
+  return monthKey(new Date(y, m-1+delta, 1));
+}
+
+/* ==========================================================================
+   ESTADO
+   -------------------------------------------------------------------------
+   As contas recorrentes NÃO são copiadas por mês: elas são calculadas na
+   hora (getMonthBills), a partir do cadastro em `recurring`. Isso garante
+   que editar ou excluir uma conta recorrente afete automaticamente TODOS
+   os meses, sem deixar cópias "presas" pra trás.
+   ========================================================================== */
+let state = null;
+
+function seedData(){
+  return {
+    currentMonth: '2026-07',
+    recurring: [
+      { id:'r1', name:'Cartão', value:5000, day:15, note:'', startMonth:'2026-07' },
+      { id:'r2', name:'Conta de Água', value:8550, day:10, note:'Companhia de saneamento', startMonth:'2026-07' },
+      { id:'r3', name:'Conta de Luz', value:15000, day:15, note:'', startMonth:'2026-07' },
+      { id:'r4', name:'Internet', value:9990, day:20, note:'', startMonth:'2026-07' }
+    ],
+    oneOffBills: {
+      '2026-07': [
+        { id:'b1', name:'Luz', value:20000, due:'2026-07-23', note:'', paid:false },
+        { id:'b2', name:'Teste2', value:5100, due:'2026-07-23', note:'', paid:false }
+      ]
+    },
+    recurringStatus: {
+      r4: { '2026-07': true }
+    }
+  };
+}
+
 async function loadState(){
   try{
     const snap = await getDoc(doc(db, 'users', currentUid));
     if(snap.exists()){
       const data = snap.data();
-      state = { currentMonth: data.currentMonth, recurring: data.recurring || [], bills: data.bills || {} };
+      state = {
+        currentMonth: data.currentMonth || monthKey(new Date()),
+        recurring: data.recurring || [],
+        oneOffBills: data.oneOffBills || {},
+        recurringStatus: data.recurringStatus || {}
+      };
       return;
     }
     throw new Error('sem dados salvos no Firestore');
@@ -530,7 +523,8 @@ async function saveState(){
     await setDoc(doc(db, 'users', currentUid), {
       currentMonth: state.currentMonth,
       recurring: state.recurring,
-      bills: state.bills
+      oneOffBills: state.oneOffBills,
+      recurringStatus: state.recurringStatus
     });
   }catch(e){
     console.error('Erro ao salvar no Firestore:', e);
@@ -538,96 +532,25 @@ async function saveState(){
   }
 }
 
-function pad2(n){ return String(n).padStart(2,'0'); }
-function monthKey(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`; }
-function todayISO(){ const t=new Date(); t.setHours(0,0,0,0); return t; }
-function currentMonthKey(){ return monthKey(new Date()); }
-
-function seedData(){
-  return {
-    currentMonth: '2026-07',
-    recurring: [
-      { id:'r1', name:'Cartão', value:5000, day:15, note:'', startMonth:'2026-07' },
-      { id:'r2', name:'Conta de Água', value:8550, day:10, note:'Companhia de saneamento', startMonth:'2026-07' },
-      { id:'r3', name:'Conta de Luz', value:15000, day:15, note:'', startMonth:'2026-07' },
-      { id:'r4', name:'Internet', value:9990, day:20, note:'', startMonth:'2026-07' }
-    ],
-    bills: {
-      '2026-07': [
-        { id:'b1', templateId:'r2', name:'Conta de Água', value:8550, due:'2026-07-10', note:'Companhia de saneamento', paid:false },
-        { id:'b2', templateId:'r1', name:'Cartão', value:5000, due:'2026-07-15', note:'', paid:false },
-        { id:'b3', templateId:'r3', name:'Conta de Luz', value:15000, due:'2026-07-15', note:'', paid:false },
-        { id:'b4', templateId:null, name:'Luz', value:20000, due:'2026-07-23', note:'', paid:false },
-        { id:'b5', templateId:null, name:'Teste2', value:5100, due:'2026-07-23', note:'', paid:false },
-        { id:'b6', templateId:'r4', name:'Internet', value:12000, due:'2026-07-24', note:'', paid:true }
-      ]
-    }
-  };
-}
-
 function uid(){ return 'id_' + Math.random().toString(36).slice(2,10); }
 
-/* ==========================================================================
-   GERAÇÃO AUTOMÁTICA DAS CONTAS RECORRENTES NO MÊS
-   -------------------------------------------------------------------------
-   Toda vez que um mês é aberto, garantimos que cada conta recorrente
-   (cujo startMonth seja <= o mês visitado) tenha uma instância criada
-   naquele mês, usando o valor/dia/observação vigentes no modelo.
-   ========================================================================== */
-function ensureMonthGenerated(monthKey){
-  if(!state.bills[monthKey]) state.bills[monthKey] = [];
-  const list = state.bills[monthKey];
-  state.recurring.forEach(rec=>{
-    if(rec.startMonth > monthKey) return; // ainda não começou nesse mês
-    const exists = list.some(b => b.templateId === rec.id);
-    if(!exists){
-      const day = pad2(Math.min(rec.day, 28));
-      list.push({
-        id:uid(), templateId:rec.id, name:rec.name, value:rec.value,
-        due:`${monthKey}-${day}`, note:rec.note, paid:false
-      });
-    }
-  });
-}
-
-/* ==========================================================================
-   SERVICE WORKER + FIREBASE CLOUD MESSAGING
-   -------------------------------------------------------------------------
-   Registra o firebase-messaging-sw.js (precisa estar publicado na raiz do
-   site, ex: via Firebase Hosting) para permitir notificações push reais,
-   inclusive com o app completamente fechado.
-   ========================================================================== */
-let swRegistration = null;
-async function registerServiceWorker(){
-  if(!('serviceWorker' in navigator)) return null;
-  try{
-    swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-    return swRegistration;
-  }catch(e){
-    console.error('Erro ao registrar firebase-messaging-sw.js (funciona apenas quando o site está publicado):', e);
-    return null;
-  }
-}
-
-async function setupMessagingAndSaveToken(){
-  try{
-    const supported = await isMessagingSupported();
-    if(!supported) return;
-    if(!swRegistration) await registerServiceWorker();
-    fbMessaging = getMessaging(fbApp);
-    const token = await getToken(fbMessaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: swRegistration || undefined });
-    if(token && currentUid){
-      await setDoc(doc(db, 'users', currentUid), { fcmTokens: [token] }, { merge: true });
-    }
-    onMessage(fbMessaging, (payload) => {
-      const title = payload.notification?.title || 'FinControl';
-      const body = payload.notification?.body || '';
-      if(swRegistration){ swRegistration.showNotification(title, { body }); }
-      else{ showToast(body || title); }
+/**
+ * Retorna a lista "achatada" de contas de um mês: as manuais (oneOffBills)
+ * mais as recorrentes computadas na hora a partir do cadastro.
+ */
+function getMonthBills(monthKey){
+  const manual = (state.oneOffBills[monthKey] || []).map(b => ({ ...b, origin:'manual' }));
+  const recurring = state.recurring
+    .filter(r => r.startMonth <= monthKey)
+    .map(r => {
+      const day = pad2(Math.min(r.day, 28));
+      const paid = !!(state.recurringStatus[r.id] && state.recurringStatus[r.id][monthKey]);
+      return {
+        id: `rec_${r.id}_${monthKey}`, templateId: r.id, name: r.name, value: r.value,
+        due: `${monthKey}-${day}`, note: r.note, paid, origin:'recurring'
+      };
     });
-  }catch(e){
-    console.error('Erro ao configurar notificações push:', e);
-  }
+  return [...manual, ...recurring];
 }
 
 /* ==========================================================================
@@ -645,7 +568,7 @@ function formatDateBR(iso){
 function formatMonthLabel(key){
   const [y,m] = key.split('-').map(Number);
   const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  return `${meses[m-1]}/${y}`;
+  return `${meses[m-1]} / ${y}`;
 }
 
 function attachCurrencyMask(input){
@@ -659,23 +582,41 @@ function attachCurrencyMask(input){
   });
 }
 function setCurrencyValue(input, cents){
-  if(cents === null || cents === undefined || cents === ''){
-    input.value = ''; input.dataset.cents = '0'; return;
-  }
+  if(cents === null || cents === undefined || cents === ''){ input.value=''; input.dataset.cents='0'; return; }
   input.dataset.cents = String(cents);
   input.value = formatCentsToBRL(cents);
 }
-function getCurrencyCents(input){
-  return parseInt(input.dataset.cents || '0', 10) || 0;
-}
+function getCurrencyCents(input){ return parseInt(input.dataset.cents || '0', 10) || 0; }
 
-/* ==========================================================================
-   STATUS DA CONTA
-   ========================================================================== */
 function billStatus(bill){
   if(bill.paid) return 'paid';
   const due = new Date(bill.due + 'T00:00:00');
   return due < todayISO() ? 'late' : 'pending';
+}
+
+/* Ícone por categoria (baseado no nome da conta) */
+const ICONS = {
+  water: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.7s6 6.5 6 11a6 6 0 01-12 0c0-4.5 6-11 6-11z"/></svg>`,
+  card: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>`,
+  bulb: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0012 2z"/></svg>`,
+  wifi: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13a10 10 0 0114 0M8.5 16.5a5 5 0 017 0"/><circle cx="12" cy="20" r="1" fill="currentColor" stroke="none"/></svg>`,
+  home: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>`,
+  receipt: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>`
+};
+function billIcon(name){
+  const n = (name||'').toLowerCase();
+  if(n.includes('água') || n.includes('agua')) return ICONS.water;
+  if(n.includes('cart')) return ICONS.card;
+  if(n.includes('luz') || n.includes('energia') || n.includes('elétr') || n.includes('eletr')) return ICONS.bulb;
+  if(n.includes('internet') || n.includes('wifi') || n.includes('wi-fi')) return ICONS.wifi;
+  if(n.includes('aluguel') || n.includes('casa') || n.includes('condom')) return ICONS.home;
+  return ICONS.receipt;
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
 }
 
 /* ==========================================================================
@@ -685,7 +626,7 @@ function renderMonth(){
   document.getElementById('monthLabel').textContent = formatMonthLabel(state.currentMonth);
   document.getElementById('monthPicker').value = state.currentMonth;
 
-  const list = state.bills[state.currentMonth] || [];
+  const list = getMonthBills(state.currentMonth);
   const sorted = [...list].sort((a,b)=> a.due.localeCompare(b.due));
 
   let toPay = 0, paidSum = 0;
@@ -704,50 +645,37 @@ function renderMonth(){
   sorted.forEach(bill => {
     const status = billStatus(bill);
     const card = document.createElement('div');
-    card.className = `bill-card ${status}`;
-
-    const pillLabel = status === 'late' ? 'Atrasada' : status === 'pending' ? 'Pendente' : 'Pago';
-    const statusIcon = status === 'paid'
-      ? `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>`
-      : status === 'late'
-      ? `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>`
-      : `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>`;
+    card.className = 'bill-card';
+    const pillLabel = status === 'late' ? 'Atrasada' : status === 'pending' ? 'Pendente' : 'Paga';
 
     card.innerHTML = `
       <div class="bill-top">
-        <div class="bill-name-row">
-          ${statusIcon}
-          <div>
-            <div class="bill-name">${escapeHtml(bill.name)}</div>
-            <div class="bill-due">Vence em ${formatDateBR(bill.due)}</div>
-          </div>
+        <div class="bill-avatar">${billIcon(bill.name)}</div>
+        <div class="bill-info">
+          <div class="bill-name">${escapeHtml(bill.name)}</div>
+          <div class="bill-due">Vence em ${formatDateBR(bill.due)}</div>
         </div>
-        <div class="bill-actions">
-          <span class="pill ${status}">${pillLabel}</span>
-          <button class="icon-action" data-edit-bill="${bill.id}">
+        <div class="bill-right">
+          <div class="bill-value">${bill.value ? formatCentsToBRL(bill.value) : '—'}</div>
+          <div class="bill-status ${status}">${pillLabel}</div>
+        </div>
+      </div>
+      <div class="bill-actions-row">
+        <div class="bill-icon-actions">
+          <button class="icon-action" data-edit-bill="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
           </button>
-          <button class="icon-action" data-del-bill="${bill.id}">
+          <button class="icon-action" data-del-bill="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z"/></svg>
           </button>
         </div>
-      </div>
-      <div class="bill-bottom">
-        <div class="bill-value">${bill.value ? formatCentsToBRL(bill.value) : '—'}</div>
         ${status === 'paid'
-          ? `<button class="btn-undo" data-undo="${bill.id}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1015-6.7L3 13"/></svg>Desfazer</button>`
-          : `<button class="btn-pagar" data-pay="${bill.id}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>Pagar</button>`}
+          ? `<button class="btn-undo" data-undo="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1015-6.7L3 13"/></svg>Desfazer</button>`
+          : `<button class="btn-pagar" data-pay="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>Pagar</button>`}
       </div>
-      ${bill.note ? `<div class="bill-note"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>${escapeHtml(bill.note)}</div>` : ''}
     `;
     container.appendChild(card);
   });
-}
-
-function escapeHtml(str){
-  const div = document.createElement('div');
-  div.textContent = str || '';
-  return div.innerHTML;
 }
 
 /* ==========================================================================
@@ -771,9 +699,7 @@ function renderRecurring(){
     const card = document.createElement('div');
     card.className = 'rec-card';
     card.innerHTML = `
-      <div class="cal-icon">
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-      </div>
+      <div class="bill-avatar">${billIcon(rec.name)}</div>
       <div class="info">
         <div class="name">${escapeHtml(rec.name)}</div>
         <div class="sub">Vence dia ${rec.day}${rec.note ? ' · ' + escapeHtml(rec.note) : ''}</div>
@@ -783,7 +709,7 @@ function renderRecurring(){
         <button class="icon-action" data-edit-rec="${rec.id}">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
         </button>
-        <button class="icon-action" data-del-rec="${rec.id}">
+        <button class="icon-action" data-del-rec="${rec.id}" data-name="${escapeHtml(rec.name)}">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z"/></svg>
         </button>
       </div>
@@ -797,12 +723,8 @@ function renderRecurring(){
    ========================================================================== */
 function openModal(id){ document.getElementById(id).classList.add('show'); }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
-document.querySelectorAll('[data-close]').forEach(btn=>{
-  btn.addEventListener('click', ()=> closeModal(btn.dataset.close));
-});
-document.querySelectorAll('.overlay').forEach(ov=>{
-  ov.addEventListener('click', (e)=>{ if(e.target === ov) closeModal(ov.id); });
-});
+document.querySelectorAll('[data-close]').forEach(btn=>{ btn.addEventListener('click', ()=> closeModal(btn.dataset.close)); });
+document.querySelectorAll('.overlay').forEach(ov=>{ ov.addEventListener('click', (e)=>{ if(e.target === ov) closeModal(ov.id); }); });
 
 function showToast(msg){
   const t = document.getElementById('toast');
@@ -812,21 +734,33 @@ function showToast(msg){
 }
 
 /* ==========================================================================
+   DRAWER (menu hambúrguer)
+   ========================================================================== */
+const drawerOverlay = document.getElementById('drawerOverlay');
+document.getElementById('btnMenu').addEventListener('click', ()=> drawerOverlay.classList.add('show'));
+drawerOverlay.addEventListener('click', (e)=>{ if(e.target === drawerOverlay) drawerOverlay.classList.remove('show'); });
+document.querySelectorAll('.drawer-link').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    setView(btn.dataset.view);
+    drawerOverlay.classList.remove('show');
+  });
+});
+function setView(view){
+  document.getElementById('viewMonth').classList.toggle('hidden', view !== 'month');
+  document.getElementById('viewRecurring').classList.toggle('hidden', view !== 'recurring');
+  document.querySelectorAll('.drawer-link').forEach(b=> b.classList.toggle('active', b.dataset.view === view));
+}
+
+/* ==========================================================================
    NAVEGAÇÃO DE MÊS
    ========================================================================== */
 function goToMonth(key){
   state.currentMonth = key;
-  ensureMonthGenerated(key);
   renderMonth();
   saveState();
 }
-function shiftMonth(delta){
-  const [y,m] = state.currentMonth.split('-').map(Number);
-  const d = new Date(y, m-1+delta, 1);
-  goToMonth(monthKey(d));
-}
-document.getElementById('prevMonth').addEventListener('click', ()=> shiftMonth(-1));
-document.getElementById('nextMonth').addEventListener('click', ()=> shiftMonth(1));
+document.getElementById('prevMonth').addEventListener('click', ()=> goToMonth(addMonths(state.currentMonth,-1)));
+document.getElementById('nextMonth').addEventListener('click', ()=> goToMonth(addMonths(state.currentMonth,1)));
 document.getElementById('monthPicker').addEventListener('change', (e)=> goToMonth(e.target.value));
 document.getElementById('monthLabelWrap').addEventListener('click', ()=>{
   const picker = document.getElementById('monthPicker');
@@ -834,19 +768,7 @@ document.getElementById('monthLabelWrap').addEventListener('click', ()=>{
 });
 
 /* ==========================================================================
-   TROCA DE ABA
-   ========================================================================== */
-function setTab(tab){
-  document.getElementById('viewMonth').classList.toggle('hidden', tab !== 'month');
-  document.getElementById('viewRecurring').classList.toggle('hidden', tab !== 'recurring');
-  document.getElementById('tabMonth').classList.toggle('active', tab === 'month');
-  document.getElementById('tabRecurring').classList.toggle('active', tab === 'recurring');
-}
-document.getElementById('tabMonth').addEventListener('click', ()=> setTab('month'));
-document.getElementById('tabRecurring').addEventListener('click', ()=> setTab('recurring'));
-
-/* ==========================================================================
-   FORM — NOVA / EDITAR CONTA DO MÊS
+   FORM — NOVA / EDITAR CONTA DO MÊS (manual)
    ========================================================================== */
 const billNameEl = document.getElementById('billName');
 const billValueEl = document.getElementById('billValue');
@@ -867,7 +789,7 @@ document.getElementById('btnNewBill').addEventListener('click', ()=>{
 });
 
 function openEditBill(id){
-  const bill = (state.bills[state.currentMonth]||[]).find(b=>b.id===id);
+  const bill = (state.oneOffBills[state.currentMonth]||[]).find(b=>b.id===id);
   if(!bill) return;
   editingBillId = id;
   document.getElementById('modalBillTitle').textContent = 'Editar conta';
@@ -886,21 +808,21 @@ document.getElementById('billSubmit').addEventListener('click', ()=>{
   const value = getCurrencyCents(billValueEl);
   const due = billDueEl.value;
   const dueMonth = due.slice(0,7);
-  if(!state.bills[dueMonth]) state.bills[dueMonth] = [];
+  if(!state.oneOffBills[dueMonth]) state.oneOffBills[dueMonth] = [];
 
   if(editingBillId){
-    const arr = state.bills[state.currentMonth];
+    const arr = state.oneOffBills[state.currentMonth] || [];
     const idx = arr.findIndex(b=>b.id===editingBillId);
     if(idx>-1){
       const bill = arr[idx];
       bill.name=name; bill.value=value; bill.due=due; bill.note=billNoteEl.value.trim();
       if(dueMonth !== state.currentMonth){
         arr.splice(idx,1);
-        state.bills[dueMonth].push(bill);
+        state.oneOffBills[dueMonth].push(bill);
       }
     }
   }else{
-    state.bills[dueMonth].push({ id:uid(), templateId:null, name, value, due, note:billNoteEl.value.trim(), paid:false });
+    state.oneOffBills[dueMonth].push({ id:uid(), name, value, due, note:billNoteEl.value.trim(), paid:false });
   }
   saveState();
   renderMonth();
@@ -910,6 +832,9 @@ document.getElementById('billSubmit').addEventListener('click', ()=>{
 
 /* ==========================================================================
    FORM — NOVA / EDITAR CONTA RECORRENTE
+   -------------------------------------------------------------------------
+   Editar aqui reflete AUTOMATICAMENTE em todos os meses (passados e
+   futuros), pois as contas recorrentes são calculadas na hora.
    ========================================================================== */
 const recNameEl = document.getElementById('recName');
 const recValueEl = document.getElementById('recValue');
@@ -941,11 +866,7 @@ function openEditRec(id){
 
 recDayEl.addEventListener('input', ()=>{
   let v = recDayEl.value.replace(/\D/g,'');
-  if(v !== ''){
-    let n = parseInt(v,10);
-    if(n > 31) n = 31;
-    v = String(n);
-  }
+  if(v !== ''){ let n = parseInt(v,10); if(n > 31) n = 31; v = String(n); }
   recDayEl.value = v;
 });
 
@@ -959,16 +880,9 @@ document.getElementById('recSubmit').addEventListener('click', ()=>{
 
   if(editingRecId){
     const rec = state.recurring.find(r=>r.id===editingRecId);
-    if(rec){
-      rec.name=name; rec.value=value; rec.day=day; rec.note=note;
-      // atualiza a instância ainda não paga do mês atual, se existir, para refletir a edição
-      const bill = (state.bills[state.currentMonth]||[]).find(b=>b.templateId===rec.id && !b.paid);
-      if(bill){ bill.name=name; bill.value=value; bill.note=note; bill.due = `${state.currentMonth}-${pad2(Math.min(day,28))}`; }
-    }
+    if(rec){ rec.name=name; rec.value=value; rec.day=day; rec.note=note; }
   }else{
-    const rec = { id:uid(), name, value, day, note, startMonth: state.currentMonth };
-    state.recurring.push(rec);
-    ensureMonthGenerated(state.currentMonth);
+    state.recurring.push({ id:uid(), name, value, day, note, startMonth: state.currentMonth });
   }
   saveState();
   renderRecurring();
@@ -980,55 +894,79 @@ document.getElementById('recSubmit').addEventListener('click', ()=>{
 /* ==========================================================================
    PAGAR / DESFAZER
    ========================================================================== */
-let payingBillId = null;
-function openPayModal(id){
-  const bill = (state.bills[state.currentMonth]||[]).find(b=>b.id===id);
-  if(!bill) return;
-  payingBillId = id;
-  document.getElementById('payBillName').textContent = bill.name;
+let payingBill = null;
+function openPayModal(id, origin, templateId, name){
+  payingBill = { id, origin, templateId, name };
+  document.getElementById('payBillName').textContent = name;
   openModal('modalPay');
 }
 document.getElementById('payConfirm').addEventListener('click', ()=>{
-  const bill = (state.bills[state.currentMonth]||[]).find(b=>b.id===payingBillId);
-  if(!bill) return;
-  bill.paid = true;
+  if(!payingBill) return;
+  if(payingBill.origin === 'manual'){
+    const bill = (state.oneOffBills[state.currentMonth]||[]).find(b=>b.id===payingBill.id);
+    if(bill) bill.paid = true;
+  }else{
+    if(!state.recurringStatus[payingBill.templateId]) state.recurringStatus[payingBill.templateId] = {};
+    state.recurringStatus[payingBill.templateId][state.currentMonth] = true;
+  }
   saveState();
   renderMonth();
   closeModal('modalPay');
   showToast('Conta marcada como paga');
 });
 
-function undoPay(id){
-  const bill = (state.bills[state.currentMonth]||[]).find(b=>b.id===id);
-  if(!bill) return;
-  bill.paid = false;
+let undoingBill = null;
+function openUndoModal(id, origin, templateId, name){
+  undoingBill = { id, origin, templateId, name };
+  document.getElementById('undoBillName').textContent = name;
+  openModal('modalUndo');
+}
+document.getElementById('undoConfirm').addEventListener('click', ()=>{
+  if(!undoingBill) return;
+  if(undoingBill.origin === 'manual'){
+    const bill = (state.oneOffBills[state.currentMonth]||[]).find(b=>b.id===undoingBill.id);
+    if(bill) bill.paid = false;
+  }else{
+    if(state.recurringStatus[undoingBill.templateId]){
+      delete state.recurringStatus[undoingBill.templateId][state.currentMonth];
+    }
+  }
   saveState();
   renderMonth();
+  closeModal('modalUndo');
   showToast('Pagamento desfeito');
-}
+});
 
 /* ==========================================================================
-   EXCLUIR (contas do mês e recorrentes)
+   EXCLUIR
+   -------------------------------------------------------------------------
+   Excluir uma conta recorrente (seja pela aba Recorrentes, seja pelo ícone
+   numa conta do mês) remove ela de TODOS os meses, porque não existem
+   cópias — é só o cadastro sendo apagado.
    ========================================================================== */
-let deleteTarget = null; // { type:'bill'|'rec', id }
-function openDeleteModal(type, id, name){
-  deleteTarget = { type, id };
+let deleteTarget = null; // { type:'bill'|'rec', id, monthKey? }
+function openDeleteModal(type, id, name, monthKeyForBill){
+  deleteTarget = { type, id, monthKey: monthKeyForBill };
   document.getElementById('deleteName').textContent = name;
+  document.getElementById('deleteMessage').innerHTML = type === 'rec'
+    ? `Deseja realmente excluir a conta recorrente "<b>${escapeHtml(name)}</b>"? Ela vai sumir de todos os meses (passados e futuros).`
+    : `Deseja realmente excluir "<b>${escapeHtml(name)}</b>"? Esta ação não pode ser desfeita.`;
   openModal('modalDelete');
 }
 document.getElementById('deleteConfirm').addEventListener('click', ()=>{
   if(!deleteTarget) return;
   if(deleteTarget.type === 'bill'){
-    const arr = state.bills[state.currentMonth];
+    const arr = state.oneOffBills[deleteTarget.monthKey] || [];
     const idx = arr.findIndex(b=>b.id===deleteTarget.id);
     if(idx>-1) arr.splice(idx,1);
-    renderMonth();
   }else{
     const idx = state.recurring.findIndex(r=>r.id===deleteTarget.id);
     if(idx>-1) state.recurring.splice(idx,1);
-    renderRecurring();
+    delete state.recurringStatus[deleteTarget.id];
   }
   saveState();
+  renderMonth();
+  renderRecurring();
   closeModal('modalDelete');
   showToast('Excluído com sucesso');
   deleteTarget = null;
@@ -1042,12 +980,14 @@ document.getElementById('billsList').addEventListener('click', (e)=>{
   const undo = e.target.closest('[data-undo]');
   const edit = e.target.closest('[data-edit-bill]');
   const del = e.target.closest('[data-del-bill]');
-  if(pay) openPayModal(pay.dataset.pay);
-  else if(undo) undoPay(undo.dataset.undo);
-  else if(edit) openEditBill(edit.dataset.editBill);
-  else if(del){
-    const bill = (state.bills[state.currentMonth]||[]).find(b=>b.id===del.dataset.delBill);
-    if(bill) openDeleteModal('bill', bill.id, bill.name);
+  if(pay) openPayModal(pay.dataset.pay, pay.dataset.origin, pay.dataset.templateId, pay.dataset.name);
+  else if(undo) openUndoModal(undo.dataset.undo, undo.dataset.origin, undo.dataset.templateId, undo.dataset.name);
+  else if(edit){
+    if(edit.dataset.origin === 'recurring') openEditRec(edit.dataset.templateId);
+    else openEditBill(edit.dataset.editBill);
+  }else if(del){
+    if(del.dataset.origin === 'recurring') openDeleteModal('rec', del.dataset.templateId, del.dataset.name);
+    else openDeleteModal('bill', del.dataset.delBill, del.dataset.name, state.currentMonth);
   }
 });
 
@@ -1055,92 +995,101 @@ document.getElementById('recurringList').addEventListener('click', (e)=>{
   const edit = e.target.closest('[data-edit-rec]');
   const del = e.target.closest('[data-del-rec]');
   if(edit) openEditRec(edit.dataset.editRec);
-  else if(del){
-    const rec = state.recurring.find(r=>r.id===del.dataset.delRec);
-    if(rec) openDeleteModal('rec', rec.id, rec.name);
-  }
+  else if(del) openDeleteModal('rec', del.dataset.delRec, del.dataset.name);
 });
 
 /* ==========================================================================
-   NOTIFICAÇÕES DE VENCIMENTO (3 dias e 1 dia antes)
+   SERVICE WORKER + FIREBASE CLOUD MESSAGING (100% automático)
    ========================================================================== */
-function refreshNotifStatus(){
-  const el = document.getElementById('notifStatus');
-  if(!('Notification' in window)){ el.textContent = 'Notificações não suportadas neste navegador.'; return; }
-  const map = { granted:'Notificações ativadas ✅', denied:'Notificações bloqueadas pelo navegador', default:'Notificações ainda não ativadas' };
-  el.textContent = map[Notification.permission];
+let swRegistration = null;
+async function registerServiceWorker(){
+  if(!('serviceWorker' in navigator)) return null;
+  try{ swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js'); return swRegistration; }
+  catch(e){ console.error('Erro ao registrar firebase-messaging-sw.js:', e); return null; }
 }
 
-document.getElementById('btnSettings').addEventListener('click', ()=>{
-  refreshNotifStatus();
-  openModal('modalSettings');
-});
-
-document.getElementById('btnEnableNotif').addEventListener('click', async ()=>{
-  if(!('Notification' in window)){ showToast('Este navegador não suporta notificações'); return; }
+async function setupMessagingAndSaveToken(){
   try{
-    const perm = await Notification.requestPermission();
-    refreshNotifStatus();
-    if(perm === 'granted'){
-      await setupMessagingAndSaveToken();
-      checkDueNotifications();
-      showToast('Notificações ativadas');
+    const supported = await isMessagingSupported();
+    if(!supported) return;
+    if(!swRegistration) await registerServiceWorker();
+    fbMessaging = getMessaging(fbApp);
+    const token = await getToken(fbMessaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: swRegistration || undefined });
+    if(token && currentUid){
+      await setDoc(doc(db, 'users', currentUid), { fcmTokens: [token] }, { merge: true });
     }
-  }catch(e){ console.error(e); }
-});
+    onMessage(fbMessaging, (payload) => {
+      const title = payload.notification?.title || 'FinControl';
+      const body = payload.notification?.body || '';
+      if(swRegistration){ swRegistration.showNotification(title, { body }); }
+      else{ showToast(body || title); }
+    });
+  }catch(e){ console.error('Erro ao configurar notificações push:', e); }
+}
 
-async function checkDueNotifications(){
+function checkDueNotifications(){
   if(!('Notification' in window) || Notification.permission !== 'granted') return;
+  const realCurrentMonth = monthKey(new Date());
+  const monthsToCheck = [realCurrentMonth, addMonths(realCurrentMonth, 1)];
   const today = todayISO();
   const toNotify = [];
-  Object.values(state.bills).flat().forEach(bill=>{
-    if(bill.paid) return;
-    const due = new Date(bill.due + 'T00:00:00');
-    const diffDays = Math.round((due - today) / 86400000);
-    if(diffDays === 3 || diffDays === 1){
-      toNotify.push({
-        title: 'FinControl',
-        body: `Sua conta "${bill.name}" vence em ${diffDays} dia${diffDays>1?'s':''} (${formatCentsToBRL(bill.value)})`,
-        tag: 'fincontrol-due-' + bill.id
-      });
-    }
-  });
-  for(const n of toNotify){
-    try{
-      if(swRegistration){
-        await swRegistration.showNotification(n.title, { body:n.body, tag:n.tag });
-      }else{
-        new Notification(n.title, { body:n.body, tag:n.tag });
+  monthsToCheck.forEach(mk => {
+    getMonthBills(mk).forEach(bill => {
+      if(bill.paid) return;
+      const due = new Date(bill.due + 'T00:00:00');
+      const diffDays = Math.round((due - today) / 86400000);
+      if(diffDays === 3 || diffDays === 1){
+        toNotify.push({
+          title:'FinControl',
+          body:`Sua conta "${bill.name}" vence em ${diffDays} dia${diffDays>1?'s':''} (${formatCentsToBRL(bill.value)})`,
+          tag:'fincontrol-due-' + bill.id
+        });
       }
+    });
+  });
+  toNotify.forEach(n => {
+    try{
+      if(swRegistration){ swRegistration.showNotification(n.title, { body:n.body, tag:n.tag }); }
+      else{ new Notification(n.title, { body:n.body, tag:n.tag }); }
     }catch(e){ console.error(e); }
-  }
+  });
 }
+
+document.getElementById('btnBell').addEventListener('click', async ()=>{
+  if(!('Notification' in window)){ showToast('Este navegador não suporta notificações'); return; }
+  if(Notification.permission !== 'granted'){
+    try{
+      const perm = await Notification.requestPermission();
+      if(perm === 'granted'){ await setupMessagingAndSaveToken(); checkDueNotifications(); showToast('Notificações ativadas'); }
+      else{ showToast('Permita as notificações no navegador para recebê-las'); }
+    }catch(e){ console.error(e); }
+  }else{
+    checkDueNotifications();
+    showToast('Verificando vencimentos...');
+  }
+});
 
 /* ==========================================================================
    INICIALIZAÇÃO
    ========================================================================== */
-function syncHeaderHeight(){
-  const h = document.querySelector('header.topbar').offsetHeight;
-  document.documentElement.style.setProperty('--header-h', h + 'px');
-}
-window.addEventListener('resize', syncHeaderHeight);
-window.addEventListener('orientationchange', syncHeaderHeight);
-
 async function init(){
-  syncHeaderHeight();
   await ensureSignedIn();
   await loadState();
-  ensureMonthGenerated(state.currentMonth);
   renderMonth();
   renderRecurring();
-  if('Notification' in window && Notification.permission === 'granted'){
-    await setupMessagingAndSaveToken();
-    checkDueNotifications();
-    // Reverifica periodicamente enquanto o app estiver aberto (em 1º ou 2º plano)
-    setInterval(checkDueNotifications, 60 * 60 * 1000);
-    document.addEventListener('visibilitychange', ()=>{
-      if(document.visibilityState === 'visible') checkDueNotifications();
-    });
+
+  if('Notification' in window){
+    if(Notification.permission === 'default'){
+      try{ await Notification.requestPermission(); }catch(e){}
+    }
+    if(Notification.permission === 'granted'){
+      await setupMessagingAndSaveToken();
+      checkDueNotifications();
+      setInterval(checkDueNotifications, 60 * 60 * 1000);
+      document.addEventListener('visibilitychange', ()=>{
+        if(document.visibilityState === 'visible') checkDueNotifications();
+      });
+    }
   }
 }
 init();
