@@ -411,7 +411,7 @@
 <div class="overlay" id="modalDelete">
   <div class="modal confirm-modal">
     <h2>Excluir conta</h2>
-    <p id="deleteMessage">Deseja realmente excluir "<b id="deleteName"></b>"? Esta ação não pode ser desfeita.</p>
+    <p id="deleteMessage">Deseja realmente excluir esta conta? Esta ação não pode ser desfeita.</p>
     <button class="btn-primary btn-danger" id="deleteConfirm">Excluir</button>
     <button class="btn-cancel" data-close="modalDelete">Cancelar</button>
   </div>
@@ -492,7 +492,8 @@ function seedData(){
     },
     recurringStatus: {
       r4: { '2026-07': true }
-    }
+    },
+    recurringOverrides: {}
   };
 }
 
@@ -505,7 +506,8 @@ async function loadState(){
         currentMonth: data.currentMonth || monthKey(new Date()),
         recurring: data.recurring || [],
         oneOffBills: data.oneOffBills || {},
-        recurringStatus: data.recurringStatus || {}
+        recurringStatus: data.recurringStatus || {},
+        recurringOverrides: data.recurringOverrides || {}
       };
       return;
     }
@@ -524,7 +526,8 @@ async function saveState(){
       currentMonth: state.currentMonth,
       recurring: state.recurring,
       oneOffBills: state.oneOffBills,
-      recurringStatus: state.recurringStatus
+      recurringStatus: state.recurringStatus,
+      recurringOverrides: state.recurringOverrides
     });
   }catch(e){
     console.error('Erro ao salvar no Firestore:', e);
@@ -544,10 +547,13 @@ function getMonthBills(monthKey){
     .filter(r => r.startMonth <= monthKey)
     .map(r => {
       const day = pad2(Math.min(r.day, 28));
+      const override = (state.recurringOverrides[r.id] && state.recurringOverrides[r.id][monthKey]) || null;
       const paid = !!(state.recurringStatus[r.id] && state.recurringStatus[r.id][monthKey]);
+      const value = override && override.value !== undefined ? override.value : r.value;
+      const note = override && override.note !== undefined ? override.note : r.note;
       return {
-        id: `rec_${r.id}_${monthKey}`, templateId: r.id, name: r.name, value: r.value,
-        due: `${monthKey}-${day}`, note: r.note, paid, origin:'recurring'
+        id: `rec_${r.id}_${monthKey}`, templateId: r.id, name: r.name, value,
+        due: `${monthKey}-${day}`, note, paid, origin:'recurring', hasOverride: !!override
       };
     });
   return [...manual, ...recurring];
@@ -653,7 +659,7 @@ function renderMonth(){
         <div class="bill-avatar">${billIcon(bill.name)}</div>
         <div class="bill-info">
           <div class="bill-name">${escapeHtml(bill.name)}</div>
-          <div class="bill-due">Vence em ${formatDateBR(bill.due)}</div>
+          <div class="bill-due">Vence em ${formatDateBR(bill.due)}${bill.hasOverride ? ' · valor ajustado' : ''}</div>
         </div>
         <div class="bill-right">
           <div class="bill-value">${bill.value ? formatCentsToBRL(bill.value) : '—'}</div>
@@ -776,14 +782,28 @@ const billDueEl = document.getElementById('billDue');
 const billNoteEl = document.getElementById('billNote');
 attachCurrencyMask(billValueEl);
 let editingBillId = null;
+let editingOverride = null; // { templateId, monthKey } quando estamos ajustando só o mês atual
+
+function openEditRecurringOverride(bill){
+  editingBillId = null;
+  editingOverride = { templateId: bill.templateId, monthKey: state.currentMonth };
+  document.getElementById('modalBillTitle').textContent = 'Ajustar valor deste mês';
+  document.getElementById('billSubmit').textContent = 'Salvar';
+  billNameEl.value = bill.name; billNameEl.disabled = true;
+  setCurrencyValue(billValueEl, bill.value);
+  billDueEl.value = bill.due; billDueEl.disabled = true;
+  billNoteEl.value = bill.note || '';
+  openModal('modalBill');
+}
 
 document.getElementById('btnNewBill').addEventListener('click', ()=>{
   editingBillId = null;
+  editingOverride = null;
   document.getElementById('modalBillTitle').textContent = 'Nova conta';
   document.getElementById('billSubmit').textContent = 'Adicionar';
-  billNameEl.value = '';
+  billNameEl.value = ''; billNameEl.disabled = false;
   setCurrencyValue(billValueEl, null);
-  billDueEl.value = `${state.currentMonth}-10`;
+  billDueEl.value = `${state.currentMonth}-10`; billDueEl.disabled = false;
   billNoteEl.value = '';
   openModal('modalBill');
 });
@@ -792,16 +812,30 @@ function openEditBill(id){
   const bill = (state.oneOffBills[state.currentMonth]||[]).find(b=>b.id===id);
   if(!bill) return;
   editingBillId = id;
+  editingOverride = null;
   document.getElementById('modalBillTitle').textContent = 'Editar conta';
   document.getElementById('billSubmit').textContent = 'Salvar';
-  billNameEl.value = bill.name;
+  billNameEl.value = bill.name; billNameEl.disabled = false;
   setCurrencyValue(billValueEl, bill.value);
-  billDueEl.value = bill.due;
+  billDueEl.value = bill.due; billDueEl.disabled = false;
   billNoteEl.value = bill.note || '';
   openModal('modalBill');
 }
 
 document.getElementById('billSubmit').addEventListener('click', ()=>{
+  if(editingOverride){
+    const value = getCurrencyCents(billValueEl);
+    const note = billNoteEl.value.trim();
+    if(!state.recurringOverrides[editingOverride.templateId]) state.recurringOverrides[editingOverride.templateId] = {};
+    state.recurringOverrides[editingOverride.templateId][editingOverride.monthKey] = { value, note };
+    saveState();
+    renderMonth();
+    closeModal('modalBill');
+    showToast('Valor deste mês atualizado');
+    editingOverride = null;
+    return;
+  }
+
   const name = billNameEl.value.trim();
   if(!name){ showToast('Informe um nome para a conta'); return; }
   if(!billDueEl.value){ showToast('Informe a data de vencimento'); return; }
@@ -947,7 +981,6 @@ document.getElementById('undoConfirm').addEventListener('click', ()=>{
 let deleteTarget = null; // { type:'bill'|'rec', id, monthKey? }
 function openDeleteModal(type, id, name, monthKeyForBill){
   deleteTarget = { type, id, monthKey: monthKeyForBill };
-  document.getElementById('deleteName').textContent = name;
   document.getElementById('deleteMessage').innerHTML = type === 'rec'
     ? `Deseja realmente excluir a conta recorrente "<b>${escapeHtml(name)}</b>"? Ela vai sumir de todos os meses (passados e futuros).`
     : `Deseja realmente excluir "<b>${escapeHtml(name)}</b>"? Esta ação não pode ser desfeita.`;
@@ -983,11 +1016,15 @@ document.getElementById('billsList').addEventListener('click', (e)=>{
   if(pay) openPayModal(pay.dataset.pay, pay.dataset.origin, pay.dataset.templateId, pay.dataset.name);
   else if(undo) openUndoModal(undo.dataset.undo, undo.dataset.origin, undo.dataset.templateId, undo.dataset.name);
   else if(edit){
-    if(edit.dataset.origin === 'recurring') openEditRec(edit.dataset.templateId);
-    else openEditBill(edit.dataset.editBill);
+    const bill = getMonthBills(state.currentMonth).find(b=>b.id===edit.dataset.editBill);
+    if(!bill) return;
+    if(bill.origin === 'recurring') openEditRecurringOverride(bill);
+    else openEditBill(bill.id);
   }else if(del){
-    if(del.dataset.origin === 'recurring') openDeleteModal('rec', del.dataset.templateId, del.dataset.name);
-    else openDeleteModal('bill', del.dataset.delBill, del.dataset.name, state.currentMonth);
+    const bill = getMonthBills(state.currentMonth).find(b=>b.id===del.dataset.delBill);
+    if(!bill) return;
+    if(bill.origin === 'recurring') openDeleteModal('rec', bill.templateId, bill.name);
+    else openDeleteModal('bill', bill.id, bill.name, state.currentMonth);
   }
 });
 
