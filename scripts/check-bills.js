@@ -16,7 +16,9 @@ function formatBRL(cents) {
 
 /**
  * Reconstrói a lista de contas de um mês: as manuais (oneOffBills) mais as
- * recorrentes, calculadas na hora a partir do cadastro — igual ao app.
+ * recorrentes, calculadas na hora a partir do cadastro, aplicando eventuais
+ * ajustes de valor feitos só para aquele mês (recurringOverrides) — igual
+ * à lógica usada no app.
  */
 function getMonthBills(data, monthKey) {
   const manual = ((data.oneOffBills && data.oneOffBills[monthKey]) || []);
@@ -26,7 +28,10 @@ function getMonthBills(data, monthKey) {
       const day = pad2(Math.min(r.day, 28));
       const status = data.recurringStatus && data.recurringStatus[r.id];
       const paid = !!(status && status[monthKey]);
-      return { name: r.name, value: r.value, due: `${monthKey}-${day}`, paid };
+      const overrideMap = data.recurringOverrides && data.recurringOverrides[r.id];
+      const override = overrideMap && overrideMap[monthKey];
+      const value = override && override.value !== undefined ? override.value : r.value;
+      return { name: r.name, value, due: `${monthKey}-${day}`, paid };
     });
   return [...manual, ...recurring];
 }
