@@ -1,0 +1,16 @@
+{
+  "name": "FinUp",
+  "short_name": "FinUp",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#38B2AC",
+  "theme_color": "#38B2AC",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icons/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
