@@ -236,7 +236,7 @@
     transition:opacity .25s, transform .25s; box-shadow:0 6px 20px rgba(0,0,0,.2);
     max-width:88vw; text-align:center;
   }
-  .toast.show{ opacity:1; transform:translateX(-50%) translateY(-6px); }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(-6px); pointer-events:auto; cursor:pointer; }
 
   .hidden{ display:none !important; }
 </style>
@@ -737,7 +737,11 @@ function showToast(msg, isError){
   t.textContent = msg;
   t.style.background = isError ? '#c0342f' : '';
   t.classList.add('show');
-  setTimeout(()=> t.classList.remove('show'), isError ? 8000 : 2200);
+  if(isError){
+    t.onclick = () => t.classList.remove('show');
+  }else{
+    setTimeout(()=> t.classList.remove('show'), 2200);
+  }
 }
 
 /* ==========================================================================
@@ -1134,9 +1138,6 @@ async function init(){
   }
 
   if('Notification' in window){
-    if(Notification.permission === 'default'){
-      try{ await Notification.requestPermission(); }catch(e){}
-    }
     if(Notification.permission === 'granted'){
       await setupMessagingAndSaveToken();
       checkDueNotifications();
@@ -1144,6 +1145,10 @@ async function init(){
       document.addEventListener('visibilitychange', ()=>{
         if(document.visibilityState === 'visible') checkDueNotifications();
       });
+    }else if(Notification.permission === 'default'){
+      // No Safari/iOS, pedir permissão sem um toque do usuário falha
+      // silenciosamente. Por isso pedimos aqui só um toque no sino.
+      showToast('Toque no sino 🔔 no topo para ativar as notificações', true);
     }
   }
 }
