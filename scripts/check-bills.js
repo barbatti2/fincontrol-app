@@ -5,12 +5,6 @@ const db = admin.firestore();
 
 function pad2(n) { return String(n).padStart(2, '0'); }
 
-/**
- * Retorna a data de "hoje" no fuso de Brasília (America/Sao_Paulo), no
- * formato YYYY-MM-DD. Isso é essencial porque o robô roda nos servidores
- * do GitHub em UTC — sem isso, perto da meia-noite o "hoje" do robô pode
- * já estar um dia à frente do "hoje" real no Brasil.
- */
 function todayBRDateString() {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit'
@@ -25,7 +19,6 @@ function addMonthsToKey(mk, delta) {
   return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}`;
 }
 
-/** Diferença em dias de calendário entre duas datas YYYY-MM-DD (sem depender do fuso do servidor). */
 function daysBetween(dateStrA, dateStrB) {
   const a = new Date(dateStrA + 'T00:00:00Z');
   const b = new Date(dateStrB + 'T00:00:00Z');
@@ -37,12 +30,6 @@ function formatBRL(cents) {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-/**
- * Reconstrói a lista de contas de um mês: as manuais (oneOffBills) mais as
- * recorrentes, calculadas na hora a partir do cadastro, aplicando eventuais
- * ajustes de valor feitos só para aquele mês (recurringOverrides) — igual
- * à lógica usada no app.
- */
 function getMonthBills(data, monthKey) {
   const manual = ((data.oneOffBills && data.oneOffBills[monthKey]) || []);
   const recurring = (data.recurring || [])
@@ -67,24 +54,36 @@ async function run() {
   console.log(`Hoje (Brasília): ${todayStr}`);
 
   const usersSnap = await db.collection('users').get();
+  console.log(`Documentos encontrados em "users": ${usersSnap.size}`);
+
   const sends = [];
+  let totalBillsChecked = 0;
 
   usersSnap.forEach((docSnap) => {
     const data = docSnap.data();
     const tokens = data.fcmTokens || [];
-    if (tokens.length === 0) return;
+    console.log(`- Usuário ${docSnap.id}: ${tokens.length} token(s) salvo(s)`);
 
     [thisMonth, nextMonth].forEach((mk) => {
-      getMonthBills(data, mk).forEach((bill) => {
-        if (!bill || bill.paid) return;
+      const bills = getMonthBills(data, mk);
+      bills.forEach((bill) => {
+        if (!bill) return;
+        totalBillsChecked++;
+        if (bill.paid) return;
         const diffDays = daysBetween(todayStr, bill.due);
-        if (diffDays === 3 || diffDays === 1) {
+        console.log(`  · "${bill.name}" vence em ${bill.due} (paga: ${bill.paid}, diffDays: ${diffDays})`);
+        if ((diffDays === 3 || diffDays === 1)) {
+          if (tokens.length === 0) {
+            console.log(`    -> bateria a condição, mas não há token salvo pra esse usuário.`);
+            return;
+          }
           const body = `Sua conta "${bill.name}" vence em ${diffDays} dia${diffDays > 1 ? 's' : ''} (${formatBRL(bill.value)})`;
           tokens.forEach((token) => {
             sends.push(
               admin.messaging()
                 .send({ token, notification: { title: 'FinControl', body } })
-                .catch((err) => console.error('Erro ao enviar para token', token, err.message))
+                .then(() => console.log(`    -> notificação enviada para token ...${token.slice(-8)}`))
+                .catch((err) => console.error(`    -> ERRO ao enviar para token ...${token.slice(-8)}:`, err.message))
             );
           });
         }
@@ -92,6 +91,7 @@ async function run() {
     });
   });
 
+  console.log(`Total de contas verificadas (2 meses, todos usuários): ${totalBillsChecked}`);
   await Promise.all(sends);
   console.log(`Verificação concluída. ${sends.length} notificação(ões) enviada(s).`);
 }
