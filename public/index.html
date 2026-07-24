@@ -732,11 +732,12 @@ function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 document.querySelectorAll('[data-close]').forEach(btn=>{ btn.addEventListener('click', ()=> closeModal(btn.dataset.close)); });
 document.querySelectorAll('.overlay').forEach(ov=>{ ov.addEventListener('click', (e)=>{ if(e.target === ov) closeModal(ov.id); }); });
 
-function showToast(msg){
+function showToast(msg, isError){
   const t = document.getElementById('toast');
   t.textContent = msg;
+  t.style.background = isError ? '#c0342f' : '';
   t.classList.add('show');
-  setTimeout(()=> t.classList.remove('show'), 2200);
+  setTimeout(()=> t.classList.remove('show'), isError ? 8000 : 2200);
 }
 
 /* ==========================================================================
@@ -1048,12 +1049,15 @@ async function registerServiceWorker(){
 async function setupMessagingAndSaveToken(){
   try{
     const supported = await isMessagingSupported();
-    if(!supported) return;
+    if(!supported){ showToast('Este navegador/app não suporta notificações push', true); return; }
     if(!swRegistration) await registerServiceWorker();
+    if(!swRegistration){ showToast('Não foi possível registrar o service worker de notificações', true); return; }
     fbMessaging = getMessaging(fbApp);
-    const token = await getToken(fbMessaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: swRegistration || undefined });
-    if(token && currentUid){
+    const token = await getToken(fbMessaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: swRegistration });
+    if(!token){ showToast('Não foi possível gerar o token de notificação', true); return; }
+    if(currentUid){
       await setDoc(doc(db, 'users', currentUid), { fcmTokens: [token] }, { merge: true });
+      showToast('Notificações configuradas com sucesso');
     }
     onMessage(fbMessaging, (payload) => {
       const title = payload.notification?.title || 'FinControl';
@@ -1061,7 +1065,10 @@ async function setupMessagingAndSaveToken(){
       if(swRegistration){ swRegistration.showNotification(title, { body }); }
       else{ showToast(body || title); }
     });
-  }catch(e){ console.error('Erro ao configurar notificações push:', e); }
+  }catch(e){
+    console.error('Erro ao configurar notificações push:', e);
+    showToast('Erro nas notificações: ' + (e && e.message ? e.message : e), true);
+  }
 }
 
 function checkDueNotifications(){
@@ -1109,11 +1116,22 @@ document.getElementById('btnBell').addEventListener('click', async ()=>{
 /* ==========================================================================
    INICIALIZAÇÃO
    ========================================================================== */
+function isStandaloneMode(){
+  return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+}
+function isIOS(){
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
 async function init(){
   await ensureSignedIn();
   await loadState();
   renderMonth();
   renderRecurring();
+
+  if(isIOS() && !isStandaloneMode()){
+    showToast('No iPhone, abra pelo ícone salvo na Tela de Início para receber notificações', true);
+  }
 
   if('Notification' in window){
     if(Notification.permission === 'default'){
