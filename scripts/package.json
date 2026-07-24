@@ -1,0 +1,8 @@
+{
+  "name": "check-bills-script",
+  "description": "Script standalone rodado pelo GitHub Actions para verificar contas a vencer",
+  "private": true,
+  "dependencies": {
+    "firebase-admin": "^12.6.0"
+  }
+}
