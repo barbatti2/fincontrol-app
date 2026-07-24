@@ -4,11 +4,34 @@ admin.initializeApp();
 const db = admin.firestore();
 
 function pad2(n) { return String(n).padStart(2, '0'); }
-function monthKeyFromDate(d) { return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`; }
-function addMonths(mk, delta) {
-  const [y, m] = mk.split('-').map(Number);
-  return monthKeyFromDate(new Date(y, m - 1 + delta, 1));
+
+/**
+ * Retorna a data de "hoje" no fuso de Brasília (America/Sao_Paulo), no
+ * formato YYYY-MM-DD. Isso é essencial porque o robô roda nos servidores
+ * do GitHub em UTC — sem isso, perto da meia-noite o "hoje" do robô pode
+ * já estar um dia à frente do "hoje" real no Brasil.
+ */
+function todayBRDateString() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(new Date());
+  const get = (type) => parts.find((p) => p.type === type).value;
+  return `${get('year')}-${get('month')}-${get('day')}`;
 }
+
+function addMonthsToKey(mk, delta) {
+  const [y, m] = mk.split('-').map(Number);
+  const d = new Date(Date.UTC(y, m - 1 + delta, 1));
+  return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}`;
+}
+
+/** Diferença em dias de calendário entre duas datas YYYY-MM-DD (sem depender do fuso do servidor). */
+function daysBetween(dateStrA, dateStrB) {
+  const a = new Date(dateStrA + 'T00:00:00Z');
+  const b = new Date(dateStrB + 'T00:00:00Z');
+  return Math.round((b - a) / 86400000);
+}
+
 function formatBRL(cents) {
   const value = (cents || 0) / 100;
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -37,10 +60,11 @@ function getMonthBills(data, monthKey) {
 }
 
 async function run() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const thisMonth = monthKeyFromDate(today);
-  const nextMonth = addMonths(thisMonth, 1);
+  const todayStr = todayBRDateString();
+  const thisMonth = todayStr.slice(0, 7);
+  const nextMonth = addMonthsToKey(thisMonth, 1);
+
+  console.log(`Hoje (Brasília): ${todayStr}`);
 
   const usersSnap = await db.collection('users').get();
   const sends = [];
@@ -53,8 +77,7 @@ async function run() {
     [thisMonth, nextMonth].forEach((mk) => {
       getMonthBills(data, mk).forEach((bill) => {
         if (!bill || bill.paid) return;
-        const due = new Date(bill.due + 'T00:00:00');
-        const diffDays = Math.round((due - today) / 86400000);
+        const diffDays = daysBetween(todayStr, bill.due);
         if (diffDays === 3 || diffDays === 1) {
           const body = `Sua conta "${bill.name}" vence em ${diffDays} dia${diffDays > 1 ? 's' : ''} (${formatBRL(bill.value)})`;
           tokens.forEach((token) => {
