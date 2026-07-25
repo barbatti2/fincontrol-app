@@ -1,30 +1,32 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="FinUp">
+<meta name="apple-mobile-web-app-title" content="FinControl">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#2FA79A">
-<title>FinUp</title>
+<title>FinControl</title>
 <link rel="manifest" href='data:application/manifest+json,{"name":"FinControl","short_name":"FinControl","start_url":".","display":"standalone","background_color":"%232FA79A","theme_color":"%232FA79A"}'>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --primary:#2FA79A;
-    --primary-dark:#238077;
-    --primary-light:#DFF3F0;
-    --bg:#F5FAF9;
+    --primary:#3B6EF6;
+    --primary-dark:#1E3FAE;
+    --primary-light:#E8EEFF;
+    --gradient: linear-gradient(135deg, #5B8DFF 0%, #1E3FAE 100%);
+    --bg:#F3F6FF;
     --card:#ffffff;
     --red:#e5484d;
     --amber:#d99425;
     --green:#1fb977;
-    --text:#0f2622;
-    --muted:#8a9a97;
-    --border:#e9f1ef;
+    --text:#10193A;
+    --muted:#8790AC;
+    --border:#E6EBF9;
     --gap:12px;
     --radius:16px;
   }
@@ -45,7 +47,7 @@
   /* ---------- Header ---------- */
   header.topbar{
     position:relative;
-    background:linear-gradient(135deg,#3BB2A4,#238077);
+    background:var(--gradient);
     padding:14px 18px 26px;
     padding-top:calc(14px + env(safe-area-inset-top, 0px));
     display:flex; align-items:center; justify-content:space-between;
@@ -62,25 +64,21 @@
   main{ max-width:560px; margin:0 auto; padding:6px 16px 0; min-height:60vh; }
   .page-title{ text-align:center; font-size:21px; font-weight:800; margin:14px 0 12px; letter-spacing:-.3px; }
 
-  /* ---------- Drawer ---------- */
-  .drawer-overlay{
-    position:fixed; inset:0; background:rgba(15,38,34,.45); z-index:90;
-    display:none; opacity:0; transition:opacity .2s;
+  /* ---------- Header actions / view toggle ---------- */
+  .header-actions{ display:flex; align-items:center; gap:8px; }
+  .view-toggle{
+    position:relative; display:flex; background:rgba(255,255,255,.18); border-radius:999px; padding:3px; gap:2px;
   }
-  .drawer-overlay.show{ display:block; opacity:1; }
-  .drawer{
-    position:fixed; top:0; left:0; bottom:0; width:78%; max-width:300px;
-    background:#fff; z-index:91; padding:26px 18px; padding-top:calc(26px + env(safe-area-inset-top,0px));
-    transform:translateX(-100%); transition:transform .22s ease;
-    display:flex; flex-direction:column; gap:6px;
+  .view-toggle-thumb{
+    position:absolute; top:3px; left:3px; width:34px; height:30px; border-radius:999px;
+    background:#fff; box-shadow:0 2px 6px rgba(15,38,34,.18);
+    transition:transform .24s cubic-bezier(.4,0,.2,1);
   }
-  .drawer-overlay.show .drawer{ transform:translateX(0); }
-  .drawer-title{ font-weight:800; font-size:19px; color:var(--primary-dark); margin-bottom:16px; }
-  .drawer-link{
-    text-align:left; background:none; border:none; padding:13px 12px; border-radius:11px;
-    font-size:15px; font-weight:600; color:var(--text); cursor:pointer; display:flex; align-items:center; gap:10px;
+  .view-toggle-btn{
+    position:relative; z-index:1; width:34px; height:30px; border:none; background:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; color:#fff; transition:color .24s;
   }
-  .drawer-link.active{ background:var(--primary-light); color:var(--primary-dark); }
+  .view-toggle-btn.active{ color:var(--primary-dark); }
 
   /* ---------- Month nav ---------- */
   .month-nav{
@@ -111,9 +109,9 @@
   .summary-wave{ position:absolute; left:0; right:0; bottom:0; width:100%; height:34px; opacity:.18; }
 
   .btn-new{
-    width:100%; background:var(--primary); color:#fff; border:none; border-radius:var(--radius);
+    width:100%; background:var(--gradient); color:#fff; border:none; border-radius:var(--radius);
     padding:15px; font-size:15.5px; font-weight:700; display:flex; align-items:center;
-    justify-content:center; gap:8px; cursor:pointer; margin-bottom:18px; box-shadow:0 4px 14px rgba(47,167,154,.3);
+    justify-content:center; gap:8px; cursor:pointer; margin-bottom:18px; box-shadow:0 4px 14px rgba(59,110,246,.35);
   }
   .btn-new:active{ opacity:.88; }
 
@@ -164,9 +162,9 @@
   }
   .rec-header p{ color:var(--muted); margin:0 auto 18px; font-size:13.5px; line-height:1.5; max-width:300px; }
   .btn-small{
-    background:var(--primary); color:#fff; border:none; border-radius:13px; padding:14px 20px;
+    background:var(--gradient); color:#fff; border:none; border-radius:13px; padding:14px 20px;
     font-weight:700; font-size:14.5px; display:inline-flex; align-items:center; justify-content:center; gap:8px;
-    cursor:pointer; width:100%; max-width:340px; margin:0 auto 22px; box-shadow:0 4px 14px rgba(47,167,154,.3);
+    cursor:pointer; width:100%; max-width:340px; margin:0 auto 22px; box-shadow:0 4px 14px rgba(59,110,246,.35);
   }
   .stats-row{ display:grid; grid-template-columns:1fr 1fr; gap:var(--gap); margin-bottom:20px; }
   .stat-card{ border:1px solid var(--border); border-radius:var(--radius); padding:16px 14px; background:#fff; text-align:center; }
@@ -210,7 +208,7 @@
   .field textarea{ resize:vertical; min-height:64px; }
   .field input:focus, .field textarea:focus{ outline:2px solid var(--primary); outline-offset:1px; }
   .btn-primary{
-    width:100%; background:var(--primary); color:#fff; border:none; border-radius:14px;
+    width:100%; background:var(--gradient); color:#fff; border:none; border-radius:14px;
     padding:15px; font-size:15.5px; font-weight:700; cursor:pointer; margin-top:2px;
   }
   .btn-primary:active{ opacity:.85; }
@@ -243,29 +241,23 @@
 <body>
 
 <header class="topbar">
-  <button class="icon-btn" id="btnMenu" aria-label="Menu">
-    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-  </button>
   <div class="brand">FinControl</div>
-  <button class="icon-btn" id="btnBell" aria-label="Notificações">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-  </button>
+  <div class="header-actions">
+    <div class="view-toggle" id="viewToggle" role="tablist" aria-label="Alternar visão">
+      <span class="view-toggle-thumb" id="viewToggleThumb"></span>
+      <button class="view-toggle-btn active" data-view="month" role="tab" aria-selected="true" aria-label="Contas do mês">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      </button>
+      <button class="view-toggle-btn" data-view="recurring" role="tab" aria-selected="false" aria-label="Recorrentes">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-9-9 9 9 0 019 9z"/><path d="M12 7v5l3 2"/></svg>
+      </button>
+    </div>
+    <button class="icon-btn" id="btnBell" aria-label="Notificações">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+    </button>
+  </div>
   <svg class="header-wave" viewBox="0 0 500 40" preserveAspectRatio="none"><path d="M0,18 C150,42 350,-8 500,18 L500,40 L0,40 Z" fill="var(--bg)"/></svg>
 </header>
-
-<div class="drawer-overlay" id="drawerOverlay">
-  <nav class="drawer" id="drawer">
-    <div class="drawer-title">FinControl</div>
-    <button class="drawer-link active" data-view="month">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-      Contas do mês
-    </button>
-    <button class="drawer-link" data-view="recurring">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-9-9 9 9 0 019 9z"/><path d="M12 7v5l3 2"/></svg>
-      Recorrentes
-    </button>
-  </nav>
-</div>
 
 <main>
   <section id="viewMonth">
@@ -492,7 +484,8 @@ function seedData(){
     recurringStatus: {
       r4: { '2026-07': true }
     },
-    recurringOverrides: {}
+    recurringOverrides: {},
+    fcmTokens: []
   };
 }
 
@@ -506,7 +499,8 @@ async function loadState(){
         recurring: data.recurring || [],
         oneOffBills: data.oneOffBills || {},
         recurringStatus: data.recurringStatus || {},
-        recurringOverrides: data.recurringOverrides || {}
+        recurringOverrides: data.recurringOverrides || {},
+        fcmTokens: data.fcmTokens || []
       };
       return;
     }
@@ -526,7 +520,8 @@ async function saveState(){
       recurring: state.recurring,
       oneOffBills: state.oneOffBills,
       recurringStatus: state.recurringStatus,
-      recurringOverrides: state.recurringOverrides
+      recurringOverrides: state.recurringOverrides,
+      fcmTokens: state.fcmTokens || []
     });
   }catch(e){
     console.error('Erro ao salvar no Firestore:', e);
@@ -744,21 +739,22 @@ function showToast(msg, isError){
 }
 
 /* ==========================================================================
-   DRAWER (menu hambúrguer)
+   SELETOR DESLIZANTE DE VISÃO (Contas do mês / Recorrentes)
    ========================================================================== */
-const drawerOverlay = document.getElementById('drawerOverlay');
-document.getElementById('btnMenu').addEventListener('click', ()=> drawerOverlay.classList.add('show'));
-drawerOverlay.addEventListener('click', (e)=>{ if(e.target === drawerOverlay) drawerOverlay.classList.remove('show'); });
-document.querySelectorAll('.drawer-link').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    setView(btn.dataset.view);
-    drawerOverlay.classList.remove('show');
-  });
+document.querySelectorAll('.view-toggle-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> setView(btn.dataset.view));
 });
 function setView(view){
   document.getElementById('viewMonth').classList.toggle('hidden', view !== 'month');
   document.getElementById('viewRecurring').classList.toggle('hidden', view !== 'recurring');
-  document.querySelectorAll('.drawer-link').forEach(b=> b.classList.toggle('active', b.dataset.view === view));
+  const activeBtn = document.querySelector(`.view-toggle-btn[data-view="${view}"]`);
+  document.querySelectorAll('.view-toggle-btn').forEach(b=>{
+    const isActive = b === activeBtn;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-selected', String(isActive));
+  });
+  const thumb = document.getElementById('viewToggleThumb');
+  if(thumb && activeBtn) thumb.style.transform = `translateX(${activeBtn.offsetLeft - 3}px)`;
 }
 
 /* ==========================================================================
@@ -996,10 +992,12 @@ document.getElementById('deleteConfirm').addEventListener('click', ()=>{
     const arr = state.oneOffBills[deleteTarget.monthKey] || [];
     const idx = arr.findIndex(b=>b.id===deleteTarget.id);
     if(idx>-1) arr.splice(idx,1);
+    if(arr.length === 0) delete state.oneOffBills[deleteTarget.monthKey];
   }else{
     const idx = state.recurring.findIndex(r=>r.id===deleteTarget.id);
     if(idx>-1) state.recurring.splice(idx,1);
     delete state.recurringStatus[deleteTarget.id];
+    delete state.recurringOverrides[deleteTarget.id];
   }
   saveState();
   renderMonth();
@@ -1059,6 +1057,7 @@ async function setupMessagingAndSaveToken(){
     const token = await getToken(fbMessaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: swRegistration });
     if(!token){ showToast('Não foi possível gerar o token de notificação', true); return; }
     if(currentUid){
+      state.fcmTokens = [token];
       await setDoc(doc(db, 'users', currentUid), { fcmTokens: [token] }, { merge: true });
       showToast('Notificações configuradas com sucesso');
     }
@@ -1074,45 +1073,16 @@ async function setupMessagingAndSaveToken(){
   }
 }
 
-function checkDueNotifications(){
-  if(!('Notification' in window) || Notification.permission !== 'granted') return;
-  const realCurrentMonth = monthKey(new Date());
-  const monthsToCheck = [realCurrentMonth, addMonths(realCurrentMonth, 1)];
-  const today = todayISO();
-  const toNotify = [];
-  monthsToCheck.forEach(mk => {
-    getMonthBills(mk).forEach(bill => {
-      if(bill.paid) return;
-      const due = new Date(bill.due + 'T00:00:00');
-      const diffDays = Math.round((due - today) / 86400000);
-      if(diffDays === 3 || diffDays === 1){
-        toNotify.push({
-          title:'FinControl',
-          body:`Sua conta "${bill.name}" vence em ${diffDays} dia${diffDays>1?'s':''} (${formatCentsToBRL(bill.value)})`,
-          tag:'fincontrol-due-' + bill.id
-        });
-      }
-    });
-  });
-  toNotify.forEach(n => {
-    try{
-      if(swRegistration){ swRegistration.showNotification(n.title, { body:n.body, tag:n.tag }); }
-      else{ new Notification(n.title, { body:n.body, tag:n.tag }); }
-    }catch(e){ console.error(e); }
-  });
-}
-
 document.getElementById('btnBell').addEventListener('click', async ()=>{
   if(!('Notification' in window)){ showToast('Este navegador não suporta notificações'); return; }
   if(Notification.permission !== 'granted'){
     try{
       const perm = await Notification.requestPermission();
-      if(perm === 'granted'){ await setupMessagingAndSaveToken(); checkDueNotifications(); showToast('Notificações ativadas'); }
+      if(perm === 'granted'){ await setupMessagingAndSaveToken(); showToast('Notificações ativadas'); }
       else{ showToast('Permita as notificações no navegador para recebê-las'); }
     }catch(e){ console.error(e); }
   }else{
-    checkDueNotifications();
-    showToast('Verificando vencimentos...');
+    showToast('Notificações já estão ativadas');
   }
 });
 
@@ -1131,6 +1101,7 @@ async function init(){
   await loadState();
   renderMonth();
   renderRecurring();
+  setView('month');
 
   if(isIOS() && !isStandaloneMode()){
     showToast('No iPhone, abra pelo ícone salvo na Tela de Início para receber notificações', true);
@@ -1139,11 +1110,6 @@ async function init(){
   if('Notification' in window){
     if(Notification.permission === 'granted'){
       await setupMessagingAndSaveToken();
-      checkDueNotifications();
-      setInterval(checkDueNotifications, 60 * 60 * 1000);
-      document.addEventListener('visibilitychange', ()=>{
-        if(document.visibilityState === 'visible') checkDueNotifications();
-      });
     }else if(Notification.permission === 'default'){
       // No Safari/iOS, pedir permissão sem um toque do usuário falha
       // silenciosamente. Por isso pedimos aqui só um toque no sino.
