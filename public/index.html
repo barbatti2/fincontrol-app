@@ -1062,8 +1062,8 @@ async function setupMessagingAndSaveToken(){
       showToast('Notificações configuradas com sucesso');
     }
     onMessage(fbMessaging, (payload) => {
-      const title = payload.notification?.title || 'FinControl';
-      const body = payload.notification?.body || '';
+      const title = payload.data?.title || 'FinControl';
+      const body = payload.data?.body || '';
       if(swRegistration){ swRegistration.showNotification(title, { body }); }
       else{ showToast(body || title); }
     });
