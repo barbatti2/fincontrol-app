@@ -1,7 +1,12 @@
 /* firebase-messaging-sw.js
    Service worker do Firebase Cloud Messaging.
    Precisa ficar na RAIZ do site publicado (mesma pasta do index.html)
-   para conseguir receber notificações push com o app fechado. */
+   para conseguir receber notificações push com o app fechado.
+
+   IMPORTANTE: as mensagens são enviadas com payload "data" (não
+   "notification"). Isso evita que o navegador exiba uma notificação
+   automática por conta própria ao mesmo tempo que o showNotification()
+   abaixo é chamado — o que causava notificação duplicada. */
 
 importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js');
@@ -19,8 +24,8 @@ const messaging = firebase.messaging();
 
 // Exibida quando o app está fechado ou em segundo plano
 messaging.onBackgroundMessage((payload) => {
-  const title = (payload.notification && payload.notification.title) || 'FinControl';
-  const body = (payload.notification && payload.notification.body) || '';
+  const title = (payload.data && payload.data.title) || 'FinControl';
+  const body = (payload.data && payload.data.body) || '';
   self.registration.showNotification(title, { body, icon: undefined });
 });
 
