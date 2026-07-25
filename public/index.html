@@ -7,9 +7,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FinControl">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#2FA79A">
+<meta name="theme-color" content="#1E3FAE">
 <title>FinControl</title>
-<link rel="manifest" href='data:application/manifest+json,{"name":"FinControl","short_name":"FinControl","start_url":".","display":"standalone","background_color":"%232FA79A","theme_color":"%232FA79A"}'>
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -451,7 +453,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithEmailAndPassword, EmailAuthProvider, linkWithCredential } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, getDocFromCache, setDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging.js";
 
 /* ==========================================================================
@@ -643,26 +645,53 @@ function seedData(){
   };
 }
 
+function applyStateFromData(data){
+  state = {
+    currentMonth: data.currentMonth || monthKey(new Date()),
+    recurring: data.recurring || [],
+    oneOffBills: data.oneOffBills || {},
+    recurringStatus: data.recurringStatus || {},
+    recurringOverrides: data.recurringOverrides || {},
+    fcmTokens: data.fcmTokens || []
+  };
+}
+
+/**
+ * Carrega os dados e desenha a tela em duas etapas:
+ * 1) Do cache local (instantâneo, sem rede) — se já existir.
+ * 2) Do servidor, por trás, atualizando a tela se algo mudou.
+ * Isso evita a tela ficar esperando a rede toda vez que o app abre.
+ */
 async function loadState(){
+  const ref = doc(db, 'users', currentUid);
+  let haveData = false;
+
   try{
-    const snap = await getDoc(doc(db, 'users', currentUid));
-    if(snap.exists()){
-      const data = snap.data();
-      state = {
-        currentMonth: data.currentMonth || monthKey(new Date()),
-        recurring: data.recurring || [],
-        oneOffBills: data.oneOffBills || {},
-        recurringStatus: data.recurringStatus || {},
-        recurringOverrides: data.recurringOverrides || {},
-        fcmTokens: data.fcmTokens || []
-      };
-      return;
+    const cacheSnap = await getDocFromCache(ref);
+    if(cacheSnap.exists()){
+      applyStateFromData(cacheSnap.data());
+      renderMonth();
+      renderRecurring();
+      haveData = true;
     }
-    throw new Error('sem dados salvos no Firestore');
   }catch(e){
-    console.error('Erro ao carregar do Firestore, usando dados iniciais:', e);
-    state = seedData();
-    await saveState();
+    // Sem nada em cache ainda (ex: primeira vez neste aparelho) — segue normalmente.
+  }
+
+  try{
+    const snap = await getDoc(ref);
+    if(snap.exists()){
+      applyStateFromData(snap.data());
+      if(haveData){ renderMonth(); renderRecurring(); }
+    }else if(!haveData){
+      throw new Error('sem dados salvos no Firestore');
+    }
+  }catch(e){
+    if(!haveData){
+      console.error('Erro ao carregar do Firestore, usando dados iniciais:', e);
+      state = seedData();
+      await saveState();
+    }
   }
 }
 
