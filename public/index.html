@@ -114,13 +114,26 @@
     justify-content:center; gap:8px; cursor:pointer; margin-bottom:18px; box-shadow:0 4px 14px rgba(59,110,246,.35);
   }
 
-  .auth-banner{
-    width:100%; background:var(--primary-light); color:var(--primary-dark); border:none; border-radius:14px;
-    padding:12px 14px; display:flex; align-items:center; justify-content:space-between;
-    font-size:13.5px; font-weight:700; margin:12px 0 4px; cursor:pointer;
-  }
-  .auth-banner:active{ opacity:.85; }
   .auth-desc{ color:var(--muted); font-size:13.5px; margin:-6px 0 14px; line-height:1.5; }
+
+  /* ---------- Tela de bloqueio ---------- */
+  .lock-screen{
+    position:fixed; inset:0; z-index:500;
+    background:rgba(243,246,255,.55);
+    backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .lock-screen.hidden{ display:none; }
+  .lock-card{
+    background:#fff; border-radius:22px; padding:30px 22px 26px; width:100%; max-width:340px;
+    box-shadow:0 20px 60px rgba(16,25,58,.28); text-align:center;
+  }
+  .lock-icon{
+    width:58px; height:58px; border-radius:50%; background:var(--primary-light); color:var(--primary-dark);
+    display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:26px;
+  }
+  .lock-card h2{ margin:0 0 6px; font-size:19px; letter-spacing:-.3px; }
+  .lock-card .field{ text-align:left; }
   .btn-new:active{ opacity:.88; }
 
   .section-title{ font-size:15px; font-weight:800; margin:4px 2px 12px; }
@@ -268,10 +281,6 @@
 </header>
 
 <main>
-  <button class="auth-banner hidden" id="authBanner">
-    <span>🔒 Proteger meus dados com senha</span>
-    <span>›</span>
-  </button>
   <section id="viewMonth">
     <h1 class="page-title">Contas do mês</h1>
     <div class="month-nav">
@@ -420,27 +429,20 @@
   </div>
 </div>
 
-<!-- Modal: senha (entrar numa conta existente ou proteger a atual) -->
-<div class="overlay" id="modalAuth">
-  <div class="modal">
-    <div class="modal-head">
-      <h2>Senha da conta</h2>
-      <button class="modal-close" data-close="modalAuth">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <p class="auth-desc">Crie uma senha pra não perder seus dados ao reinstalar o app, ou digite uma senha que já configurou antes pra entrar nessa conta.</p>
+<!-- Tela de bloqueio: aparece sempre que o app abre, com o fundo borrado -->
+<div class="lock-screen hidden" id="lockScreen">
+  <div class="lock-card">
+    <div class="lock-icon">🔒</div>
+    <h2 id="lockTitle">Digite sua senha</h2>
+    <p id="lockDesc" class="auth-desc">Digite a senha para acessar o FinControl.</p>
     <div class="field">
-      <label>Senha</label>
-      <input type="password" id="authPassword" placeholder="Digite uma senha" autocomplete="current-password">
+      <input type="password" id="lockPassword" placeholder="Senha" autocomplete="current-password">
     </div>
-    <div class="field" id="authConfirmField">
-      <label>Confirmar senha (só pra criar uma nova)</label>
-      <input type="password" id="authPasswordConfirm" placeholder="Repita a senha" autocomplete="new-password">
+    <div class="field hidden" id="lockConfirmField">
+      <input type="password" id="lockPasswordConfirm" placeholder="Confirmar senha" autocomplete="new-password">
     </div>
-    <button class="btn-primary" id="authLoginBtn">Entrar com essa senha</button>
-    <button class="btn-primary" id="authSetupBtn" style="margin-top:8px;background:#fff;color:var(--primary-dark);border:1.5px solid var(--primary);">Proteger esta conta com essa senha</button>
-    <button class="btn-cancel" data-close="modalAuth">Cancelar</button>
+    <button class="btn-primary" id="lockSubmit">Desbloquear</button>
+    <button class="btn-cancel" id="lockSwitchMode">Ainda não configurei uma senha</button>
   </div>
 </div>
 
@@ -481,19 +483,22 @@ function ensureSignedIn(){
       if(user){
         const uidChanged = currentUid !== null && currentUid !== user.uid;
         currentUid = user.uid;
-        updateAuthBanner(user);
         if(uidChanged){
-          // Usuário trocou de conta (ex: tocou em "Entrar" com uma senha
-          // de outra conta) — recarrega os dados dessa conta na tela.
+          // Trocou de conta (ex: digitou a senha de uma conta já existente
+          // depois de reinstalar) — recarrega os dados dessa conta na tela.
           await loadState();
           renderMonth();
           renderRecurring();
         }
-        if(!resolved){ resolved = true; resolve(user.uid); }
+        if(!resolved){
+          resolved = true;
+          showLock('unlock'); // toda vez que o app abre, pede a senha
+          resolve(user.uid);
+        }
       }else{
         // Sem sessão salva (ex: reinstalou o app) — continua funcionando
-        // normalmente com um perfil novo, sem travar nada. Quem já tinha
-        // configurado uma senha pode tocar no banner pra entrar na conta certa.
+        // por baixo dos panos com um perfil novo, sem travar nada; a tela
+        // de bloqueio acima é quem decide o que o usuário consegue ver.
         signInAnonymously(fbAuth).catch(e => console.error('Erro no login anônimo:', e));
       }
     });
@@ -501,57 +506,77 @@ function ensureSignedIn(){
 }
 
 /* ==========================================================================
-   SENHA (opcional, sem e-mail visível pro usuário)
+   TELA DE BLOQUEIO (senha, sem e-mail visível pro usuário)
    -------------------------------------------------------------------------
-   Isso nunca bloqueia o uso do app — é só um atalho pra:
-   - "Entrar": trocar pra uma conta que já tem senha configurada.
-   - "Proteger": transformar a sessão anônima atual numa conta permanente
-     com essa senha, mantendo o mesmo UID e os mesmos dados
-     (linkWithCredential) — assim reinstalar não cria mais um perfil vazio.
+   - "unlock": pede a senha já configurada. Se der certo, troca (se preciso)
+     pra conta permanente correta e libera a tela.
+   - "create": primeira vez configurando — vira a sessão atual (anônima)
+     numa conta permanente com essa senha, SEM perder os dados de hoje
+     (linkWithCredential mantém o mesmo UID).
    ========================================================================== */
-function updateAuthBanner(user){
-  const banner = document.getElementById('authBanner');
-  if(!banner) return;
-  banner.classList.toggle('hidden', !(user && user.isAnonymous));
+let lockMode = 'unlock';
+
+function showLock(mode){
+  lockMode = mode;
+  document.getElementById('lockPassword').value = '';
+  document.getElementById('lockPasswordConfirm').value = '';
+  const title = document.getElementById('lockTitle');
+  const desc = document.getElementById('lockDesc');
+  const confirmField = document.getElementById('lockConfirmField');
+  const submit = document.getElementById('lockSubmit');
+  const switchBtn = document.getElementById('lockSwitchMode');
+  if(mode === 'create'){
+    title.textContent = 'Crie uma senha';
+    desc.textContent = 'Essa senha protege seus dados: mesmo reinstalando o app, você acessa as mesmas contas sem perder nada.';
+    confirmField.classList.remove('hidden');
+    submit.textContent = 'Criar senha e continuar';
+    switchBtn.textContent = 'Já tenho uma senha, entrar';
+  }else{
+    title.textContent = 'Digite sua senha';
+    desc.textContent = 'Digite a senha para acessar o FinControl.';
+    confirmField.classList.add('hidden');
+    submit.textContent = 'Desbloquear';
+    switchBtn.textContent = 'Ainda não configurei uma senha';
+  }
+  document.getElementById('lockScreen').classList.remove('hidden');
 }
 
-document.getElementById('authBanner').addEventListener('click', ()=>{
-  document.getElementById('authPassword').value = '';
-  document.getElementById('authPasswordConfirm').value = '';
-  openModal('modalAuth');
+function hideLock(){
+  document.getElementById('lockScreen').classList.add('hidden');
+}
+
+document.getElementById('lockSwitchMode').addEventListener('click', ()=>{
+  showLock(lockMode === 'unlock' ? 'create' : 'unlock');
 });
 
-document.getElementById('authLoginBtn').addEventListener('click', async ()=>{
-  const pass = document.getElementById('authPassword').value;
-  if(!pass || pass.length < 6){ showToast('Digite a senha (mínimo 6 caracteres)'); return; }
-  try{
-    await signInWithEmailAndPassword(fbAuth, APP_EMAIL, pass);
-    closeModal('modalAuth');
-    showToast('Login realizado');
-  }catch(e){
-    if(e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential'){ showToast('Senha incorreta', true); }
-    else if(e.code === 'auth/user-not-found'){ showToast('Nenhuma senha configurada ainda', true); }
-    else{ showToast('Erro ao entrar: ' + e.message, true); }
-  }
-});
-
-document.getElementById('authSetupBtn').addEventListener('click', async ()=>{
-  const pass = document.getElementById('authPassword').value;
-  const confirmPass = document.getElementById('authPasswordConfirm').value;
+document.getElementById('lockSubmit').addEventListener('click', async ()=>{
+  const pass = document.getElementById('lockPassword').value;
   if(!pass || pass.length < 6){ showToast('A senha precisa ter pelo menos 6 caracteres'); return; }
-  if(pass !== confirmPass){ showToast('As senhas não coincidem'); return; }
-  if(!fbAuth.currentUser || !fbAuth.currentUser.isAnonymous){ showToast('Esta conta já tem uma senha configurada'); return; }
-  try{
-    const cred = EmailAuthProvider.credential(APP_EMAIL, pass);
-    await linkWithCredential(fbAuth.currentUser, cred);
-    updateAuthBanner(fbAuth.currentUser);
-    closeModal('modalAuth');
-    showToast('Senha configurada com sucesso');
-  }catch(e){
-    if(e.code === 'auth/email-already-in-use' || e.code === 'auth/credential-already-in-use'){
-      showToast('Já existe uma senha configurada — use "Entrar" com ela', true);
-    }else{
-      showToast('Erro ao configurar senha: ' + e.message, true);
+
+  if(lockMode === 'unlock'){
+    try{
+      await signInWithEmailAndPassword(fbAuth, APP_EMAIL, pass);
+      hideLock();
+    }catch(e){
+      if(e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential'){ showToast('Senha incorreta', true); }
+      else if(e.code === 'auth/user-not-found'){ showToast('Nenhuma senha configurada ainda — toque em "Ainda não configurei uma senha" abaixo', true); }
+      else{ showToast('Erro ao desbloquear: ' + e.message, true); }
+    }
+  }else{
+    const confirmPass = document.getElementById('lockPasswordConfirm').value;
+    if(pass !== confirmPass){ showToast('As senhas não coincidem'); return; }
+    if(!fbAuth.currentUser || !fbAuth.currentUser.isAnonymous){ showToast('Esta conta já tem uma senha configurada'); return; }
+    try{
+      const cred = EmailAuthProvider.credential(APP_EMAIL, pass);
+      await linkWithCredential(fbAuth.currentUser, cred);
+      hideLock();
+      showToast('Senha criada com sucesso');
+    }catch(e){
+      if(e.code === 'auth/email-already-in-use' || e.code === 'auth/credential-already-in-use'){
+        showToast('Já existe uma senha criada — toque em "Já tenho uma senha, entrar"', true);
+      }else{
+        showToast('Erro ao criar senha: ' + e.message, true);
+      }
     }
   }
 });
