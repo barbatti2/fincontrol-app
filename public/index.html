@@ -420,24 +420,27 @@
   </div>
 </div>
 
-<!-- Modal: login / configurar senha -->
+<!-- Modal: senha (entrar numa conta existente ou proteger a atual) -->
 <div class="overlay" id="modalAuth">
   <div class="modal">
     <div class="modal-head">
-      <h2 id="authModalTitle">Entrar</h2>
+      <h2>Senha da conta</h2>
+      <button class="modal-close" data-close="modalAuth">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
     </div>
-    <p id="authModalDesc" class="auth-desc"></p>
+    <p class="auth-desc">Crie uma senha pra não perder seus dados ao reinstalar o app, ou digite uma senha que já configurou antes pra entrar nessa conta.</p>
     <div class="field">
       <label>Senha</label>
-      <input type="password" id="authPassword" placeholder="Digite sua senha" autocomplete="current-password">
+      <input type="password" id="authPassword" placeholder="Digite uma senha" autocomplete="current-password">
     </div>
-    <div class="field hidden" id="authConfirmField">
-      <label>Confirmar senha</label>
+    <div class="field" id="authConfirmField">
+      <label>Confirmar senha (só pra criar uma nova)</label>
       <input type="password" id="authPasswordConfirm" placeholder="Repita a senha" autocomplete="new-password">
     </div>
-    <button class="btn-primary" id="authSubmit">Entrar</button>
-    <button class="btn-cancel hidden" id="authFallback">Ainda não configurei uma senha</button>
-    <button class="btn-cancel hidden" id="authCancel">Cancelar</button>
+    <button class="btn-primary" id="authLoginBtn">Entrar com essa senha</button>
+    <button class="btn-primary" id="authSetupBtn" style="margin-top:8px;background:#fff;color:var(--primary-dark);border:1.5px solid var(--primary);">Proteger esta conta com essa senha</button>
+    <button class="btn-cancel" data-close="modalAuth">Cancelar</button>
   </div>
 </div>
 
@@ -473,98 +476,82 @@ let currentUid = null;
 
 function ensureSignedIn(){
   return new Promise((resolve) => {
-    onAuthStateChanged(fbAuth, (user) => {
+    let resolved = false;
+    onAuthStateChanged(fbAuth, async (user) => {
       if(user){
+        const uidChanged = currentUid !== null && currentUid !== user.uid;
         currentUid = user.uid;
-        closeModal('modalAuth');
         updateAuthBanner(user);
-        resolve(user.uid);
+        if(uidChanged){
+          // Usuário trocou de conta (ex: tocou em "Entrar" com uma senha
+          // de outra conta) — recarrega os dados dessa conta na tela.
+          await loadState();
+          renderMonth();
+          renderRecurring();
+        }
+        if(!resolved){ resolved = true; resolve(user.uid); }
       }else{
-        openAuthModal('login');
+        // Sem sessão salva (ex: reinstalou o app) — continua funcionando
+        // normalmente com um perfil novo, sem travar nada. Quem já tinha
+        // configurado uma senha pode tocar no banner pra entrar na conta certa.
+        signInAnonymously(fbAuth).catch(e => console.error('Erro no login anônimo:', e));
       }
     });
   });
 }
 
 /* ==========================================================================
-   LOGIN POR SENHA (sem e-mail visível pro usuário)
+   SENHA (opcional, sem e-mail visível pro usuário)
    -------------------------------------------------------------------------
-   - "login": pede a senha já configurada e reconecta na MESMA conta/dados.
-   - "setup": transforma a sessão anônima atual numa conta permanente,
-     mantendo o mesmo UID e os mesmos dados (linkWithCredential) — assim
-     reinstalar o app não cria mais um perfil vazio novo.
+   Isso nunca bloqueia o uso do app — é só um atalho pra:
+   - "Entrar": trocar pra uma conta que já tem senha configurada.
+   - "Proteger": transformar a sessão anônima atual numa conta permanente
+     com essa senha, mantendo o mesmo UID e os mesmos dados
+     (linkWithCredential) — assim reinstalar não cria mais um perfil vazio.
    ========================================================================== */
-let authMode = 'login';
-
-function openAuthModal(mode){
-  authMode = mode;
-  document.getElementById('authPassword').value = '';
-  document.getElementById('authPasswordConfirm').value = '';
-  const title = document.getElementById('authModalTitle');
-  const desc = document.getElementById('authModalDesc');
-  const confirmField = document.getElementById('authConfirmField');
-  const submit = document.getElementById('authSubmit');
-  const fallback = document.getElementById('authFallback');
-  const cancel = document.getElementById('authCancel');
-  if(mode === 'login'){
-    title.textContent = 'Entrar no FinControl';
-    desc.textContent = 'Digite a senha que você configurou para acessar suas contas.';
-    confirmField.classList.add('hidden');
-    submit.textContent = 'Entrar';
-    fallback.classList.remove('hidden');
-    cancel.classList.add('hidden');
-  }else{
-    title.textContent = 'Proteger seus dados';
-    desc.textContent = 'Crie uma senha. Assim, mesmo desinstalando e reinstalando o app, você continua acessando as mesmas contas sem perder nada.';
-    confirmField.classList.remove('hidden');
-    submit.textContent = 'Salvar senha';
-    fallback.classList.add('hidden');
-    cancel.classList.remove('hidden');
-  }
-  openModal('modalAuth');
-}
-
 function updateAuthBanner(user){
   const banner = document.getElementById('authBanner');
   if(!banner) return;
   banner.classList.toggle('hidden', !(user && user.isAnonymous));
 }
 
-document.getElementById('btnSetupPassword').addEventListener('click', ()=> openAuthModal('setup'));
-document.getElementById('authCancel').addEventListener('click', ()=> closeModal('modalAuth'));
-
-document.getElementById('authFallback').addEventListener('click', ()=>{
-  closeModal('modalAuth');
-  signInAnonymously(fbAuth).catch(e => console.error('Erro no login anônimo:', e));
+document.getElementById('authBanner').addEventListener('click', ()=>{
+  document.getElementById('authPassword').value = '';
+  document.getElementById('authPasswordConfirm').value = '';
+  openModal('modalAuth');
 });
 
-document.getElementById('authSubmit').addEventListener('click', async ()=>{
+document.getElementById('authLoginBtn').addEventListener('click', async ()=>{
   const pass = document.getElementById('authPassword').value;
-  if(!pass || pass.length < 6){ showToast('A senha precisa ter pelo menos 6 caracteres'); return; }
+  if(!pass || pass.length < 6){ showToast('Digite a senha (mínimo 6 caracteres)'); return; }
+  try{
+    await signInWithEmailAndPassword(fbAuth, APP_EMAIL, pass);
+    closeModal('modalAuth');
+    showToast('Login realizado');
+  }catch(e){
+    if(e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential'){ showToast('Senha incorreta', true); }
+    else if(e.code === 'auth/user-not-found'){ showToast('Nenhuma senha configurada ainda', true); }
+    else{ showToast('Erro ao entrar: ' + e.message, true); }
+  }
+});
 
-  if(authMode === 'login'){
-    try{
-      await signInWithEmailAndPassword(fbAuth, APP_EMAIL, pass);
-    }catch(e){
-      if(e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential'){ showToast('Senha incorreta', true); }
-      else if(e.code === 'auth/user-not-found'){ showToast('Nenhuma senha configurada ainda neste app', true); }
-      else{ showToast('Erro ao entrar: ' + e.message, true); }
-    }
-  }else{
-    const confirmPass = document.getElementById('authPasswordConfirm').value;
-    if(pass !== confirmPass){ showToast('As senhas não coincidem'); return; }
-    try{
-      const cred = EmailAuthProvider.credential(APP_EMAIL, pass);
-      await linkWithCredential(fbAuth.currentUser, cred);
-      updateAuthBanner(fbAuth.currentUser);
-      closeModal('modalAuth');
-      showToast('Senha configurada com sucesso');
-    }catch(e){
-      if(e.code === 'auth/email-already-in-use' || e.code === 'auth/credential-already-in-use'){
-        showToast('Já existe uma senha configurada — use "Entrar" com ela', true);
-      }else{
-        showToast('Erro ao configurar senha: ' + e.message, true);
-      }
+document.getElementById('authSetupBtn').addEventListener('click', async ()=>{
+  const pass = document.getElementById('authPassword').value;
+  const confirmPass = document.getElementById('authPasswordConfirm').value;
+  if(!pass || pass.length < 6){ showToast('A senha precisa ter pelo menos 6 caracteres'); return; }
+  if(pass !== confirmPass){ showToast('As senhas não coincidem'); return; }
+  if(!fbAuth.currentUser || !fbAuth.currentUser.isAnonymous){ showToast('Esta conta já tem uma senha configurada'); return; }
+  try{
+    const cred = EmailAuthProvider.credential(APP_EMAIL, pass);
+    await linkWithCredential(fbAuth.currentUser, cred);
+    updateAuthBanner(fbAuth.currentUser);
+    closeModal('modalAuth');
+    showToast('Senha configurada com sucesso');
+  }catch(e){
+    if(e.code === 'auth/email-already-in-use' || e.code === 'auth/credential-already-in-use'){
+      showToast('Já existe uma senha configurada — use "Entrar" com ela', true);
+    }else{
+      showToast('Erro ao configurar senha: ' + e.message, true);
     }
   }
 });
@@ -848,7 +835,7 @@ function renderRecurring(){
 function openModal(id){ document.getElementById(id).classList.add('show'); }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 document.querySelectorAll('[data-close]').forEach(btn=>{ btn.addEventListener('click', ()=> closeModal(btn.dataset.close)); });
-document.querySelectorAll('.overlay').forEach(ov=>{ ov.addEventListener('click', (e)=>{ if(e.target === ov && ov.id !== 'modalAuth') closeModal(ov.id); }); });
+document.querySelectorAll('.overlay').forEach(ov=>{ ov.addEventListener('click', (e)=>{ if(e.target === ov) closeModal(ov.id); }); });
 
 function showToast(msg, isError){
   const t = document.getElementById('toast');
