@@ -451,7 +451,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithEmailAndPassword, EmailAuthProvider, linkWithCredential } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging.js";
 
 /* ==========================================================================
@@ -473,8 +473,13 @@ const APP_EMAIL = "dono@fincontrol-app.local";
 const fbApp = initializeApp(firebaseConfig);
 const fbAuth = getAuth(fbApp);
 const db = getFirestore(fbApp);
+enableIndexedDbPersistence(db).catch((err) => {
+  // Acontece normalmente se o app estiver aberto em duas abas ao mesmo tempo — sem problema, só não cacheia.
+  console.warn('Persistência offline não habilitada:', err.code);
+});
 let fbMessaging = null;
 let currentUid = null;
+const LOCK_DURATION_MS = 24 * 60 * 60 * 1000; // fica desbloqueado por 24h
 
 function ensureSignedIn(){
   return new Promise((resolve) => {
@@ -492,7 +497,13 @@ function ensureSignedIn(){
         }
         if(!resolved){
           resolved = true;
-          showLock('unlock'); // toda vez que o app abre, pede a senha
+          const lastUnlock = parseInt(localStorage.getItem('fincontrol_last_unlock') || '0', 10);
+          const aindaDentroDaJanela = (Date.now() - lastUnlock) < LOCK_DURATION_MS;
+          if(aindaDentroDaJanela){
+            markUnlocked(); // renova a janela de 24h a partir de agora
+          }else{
+            showLock(user.isAnonymous ? 'create' : 'unlock');
+          }
           resolve(user.uid);
         }
       }else{
@@ -513,8 +524,14 @@ function ensureSignedIn(){
    - "create": primeira vez configurando — vira a sessão atual (anônima)
      numa conta permanente com essa senha, SEM perder os dados de hoje
      (linkWithCredential mantém o mesmo UID).
+   Fica desbloqueado por 24h (LOCK_DURATION_MS) — só pede a senha de novo
+   depois que esse tempo passar.
    ========================================================================== */
 let lockMode = 'unlock';
+
+function markUnlocked(){
+  localStorage.setItem('fincontrol_last_unlock', String(Date.now()));
+}
 
 function showLock(mode){
   lockMode = mode;
@@ -543,6 +560,7 @@ function showLock(mode){
 
 function hideLock(){
   document.getElementById('lockScreen').classList.add('hidden');
+  markUnlocked();
 }
 
 document.getElementById('lockSwitchMode').addEventListener('click', ()=>{
