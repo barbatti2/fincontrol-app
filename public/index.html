@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="FinControl">
+<meta name="apple-mobile-web-app-title" content="FinUp">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1E3FAE">
-<title>FinControl</title>
+<title>FinUp</title>
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="manifest" href="manifest.json">
@@ -145,7 +145,11 @@
   .bill-card{
     background:var(--card); border-radius:var(--radius); padding:13px 14px;
     box-shadow:0 1px 6px rgba(20,60,55,.05);
+    border-left:4px solid transparent;
   }
+  .bill-card.status-late{ border-left-color:var(--red); }
+  .bill-card.status-pending{ border-left-color:var(--amber); }
+  .bill-card.status-paid{ border-left-color:var(--green); }
   .bill-top{ display:flex; align-items:center; gap:12px; }
   .bill-avatar{
     width:44px; height:44px; border-radius:50%; background:var(--primary-light); color:var(--primary-dark);
@@ -165,6 +169,8 @@
   .bill-icon-actions{ display:flex; gap:12px; }
   .icon-action{ background:none; border:none; cursor:pointer; color:#b3bdba; padding:2px; display:flex; }
   .icon-action:active{ opacity:.55; }
+  .icon-action.disabled{ opacity:.3; cursor:not-allowed; }
+  .icon-action.disabled:active{ opacity:.3; }
   .btn-pagar{
     background:var(--primary); color:#fff; border:none; border-radius:10px; padding:8px 16px;
     font-weight:700; font-size:13px; display:flex; align-items:center; gap:6px; cursor:pointer;
@@ -264,7 +270,7 @@
 <body>
 
 <header class="topbar">
-  <div class="brand">FinControl</div>
+  <div class="brand">FinUp</div>
   <div class="header-actions">
     <div class="view-toggle" id="viewToggle" role="tablist" aria-label="Alternar visão">
       <span class="view-toggle-thumb" id="viewToggleThumb"></span>
@@ -436,7 +442,7 @@
   <div class="lock-card">
     <div class="lock-icon">🔒</div>
     <h2 id="lockTitle">Digite sua senha</h2>
-    <p id="lockDesc" class="auth-desc">Digite a senha para acessar o FinControl.</p>
+    <p id="lockDesc" class="auth-desc">Digite a senha para acessar o FinUp.</p>
     <div class="field">
       <input type="password" id="lockPassword" placeholder="Senha" autocomplete="current-password">
     </div>
@@ -552,7 +558,7 @@ function showLock(mode){
     switchBtn.textContent = 'Já tenho uma senha, entrar';
   }else{
     title.textContent = 'Digite sua senha';
-    desc.textContent = 'Digite a senha para acessar o FinControl.';
+    desc.textContent = 'Digite a senha para acessar o FinUp.';
     confirmField.classList.add('hidden');
     submit.textContent = 'Desbloquear';
     switchBtn.textContent = 'Ainda não configurei uma senha';
@@ -828,7 +834,7 @@ function renderMonth(){
   sorted.forEach(bill => {
     const status = billStatus(bill);
     const card = document.createElement('div');
-    card.className = 'bill-card';
+    card.className = 'bill-card status-' + status;
     const pillLabel = status === 'late' ? 'Atrasada' : status === 'pending' ? 'Pendente' : 'Paga';
 
     card.innerHTML = `
@@ -845,7 +851,7 @@ function renderMonth(){
       </div>
       <div class="bill-actions-row">
         <div class="bill-icon-actions">
-          <button class="icon-action" data-edit-bill="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}">
+          <button class="icon-action${bill.paid ? ' disabled' : ''}" data-edit-bill="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" ${bill.paid ? 'title="Desfaça o pagamento para editar"' : ''}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
           </button>
           <button class="icon-action" data-del-bill="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}">
@@ -1203,6 +1209,7 @@ document.getElementById('billsList').addEventListener('click', (e)=>{
   else if(edit){
     const bill = getMonthBills(state.currentMonth).find(b=>b.id===edit.dataset.editBill);
     if(!bill) return;
+    if(bill.paid){ showToast('Desfaça o pagamento para poder editar esta conta'); return; }
     if(bill.origin === 'recurring') openEditRecurringOverride(bill);
     else openEditBill(bill.id);
   }else if(del){
@@ -1245,7 +1252,7 @@ async function setupMessagingAndSaveToken(){
       showToast('Notificações configuradas com sucesso');
     }
     onMessage(fbMessaging, (payload) => {
-      const title = payload.data?.title || 'FinControl';
+      const title = payload.data?.title || 'FinUp';
       const body = payload.data?.body || '';
       if(swRegistration){ swRegistration.showNotification(title, { body }); }
       else{ showToast(body || title); }
