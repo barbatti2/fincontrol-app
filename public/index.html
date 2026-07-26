@@ -189,6 +189,49 @@
   }
 
   .empty-state{ text-align:center; color:var(--muted); padding:56px 20px; font-size:14.5px; }
+
+  /* ---------- Card de destaque (próxima a vencer) ---------- */
+  .bill-highlight{
+    background:var(--gradient); border-radius:var(--radius); padding:14px 16px 16px; color:#fff;
+    box-shadow:0 10px 26px rgba(30,63,174,.32); margin-bottom:var(--gap);
+  }
+  .bill-highlight-badge{
+    display:inline-block; background:rgba(255,255,255,.24); color:#fff; font-size:10.5px; font-weight:800;
+    letter-spacing:.3px; text-transform:uppercase; padding:4px 9px; border-radius:7px; margin-bottom:11px;
+  }
+  .bill-highlight-top{ display:flex; align-items:center; gap:10px; }
+  .bill-highlight-avatar{
+    width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.22); color:#fff;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .bill-highlight-info{ flex:1; min-width:0; }
+  .bill-highlight-name{ font-weight:800; font-size:15.5px; }
+  .bill-highlight-due{ font-size:12px; opacity:.85; margin-top:1px; }
+  .bill-highlight-right{ text-align:right; flex-shrink:0; }
+  .bill-highlight-value{ font-size:16.5px; font-weight:800; }
+  .bill-highlight-pay{
+    margin-top:13px; width:100%; background:#fff; color:var(--primary-dark); border:none; border-radius:11px;
+    padding:11px; font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center;
+    gap:7px; cursor:pointer;
+  }
+  .bill-highlight-pay:active{ opacity:.88; }
+
+  /* ---------- Arrastar pro lado (swipe) ---------- */
+  .bill-swipe-wrap{ position:relative; border-radius:var(--radius); overflow:hidden; }
+  .bill-swipe-actions{
+    position:absolute; top:0; right:0; bottom:0; width:132px; display:flex;
+  }
+  .swipe-btn{
+    flex:1; border:none; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:3px; color:#fff; font-size:11px; font-weight:700; cursor:pointer; padding:0;
+  }
+  .swipe-more{ background:#98a2b8; }
+  .swipe-pay{ background:var(--primary); }
+  .swipe-pay.undo{ background:#8a94a6; }
+  .bill-swipe-card{
+    position:relative; z-index:1; touch-action:pan-y; user-select:none;
+    -webkit-user-select:none;
+  }
   .empty-state .icon{ font-size:34px; margin-bottom:10px; }
 
   /* ---------- Recurring view ---------- */
@@ -249,6 +292,8 @@
     padding:15px; font-size:15.5px; font-weight:700; cursor:pointer; margin-top:2px;
   }
   .btn-primary:active{ opacity:.85; }
+  .btn-primary.disabled{ opacity:.4; cursor:not-allowed; }
+  .btn-primary.disabled:active{ opacity:.4; }
   .btn-danger{ background:var(--red); }
   .btn-cancel{
     width:100%; background:none; border:none; color:var(--text); font-size:15px;
@@ -438,6 +483,21 @@
     <p>Confirmar que deseja desfazer o pagamento de <b id="undoBillName"></b>?</p>
     <button class="btn-primary" id="undoConfirm">Desfazer pagamento</button>
     <button class="btn-cancel" data-close="modalUndo">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal: ações da conta (Editar / Excluir), aberto pelo "Mais" do swipe -->
+<div class="overlay" id="modalBillActions">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>O que deseja fazer?</h2>
+      <button class="modal-close" data-close="modalBillActions">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <button class="btn-primary" id="billActionsEdit">Editar</button>
+    <button class="btn-primary btn-danger" id="billActionsDelete" style="margin-top:10px;">Excluir</button>
+    <button class="btn-cancel" data-close="modalBillActions">Cancelar</button>
   </div>
 </div>
 
@@ -862,6 +922,8 @@ function escapeHtml(str){
 /* ==========================================================================
    RENDER — CONTAS DO MÊS
    ========================================================================== */
+const SWIPE_ACTIONS_WIDTH = 132;
+
 function renderMonth(){
   document.getElementById('monthLabel').textContent = formatMonthLabel(state.currentMonth);
   document.getElementById('monthPicker').value = state.currentMonth;
@@ -882,41 +944,123 @@ function renderMonth(){
     return;
   }
 
-  sorted.forEach(bill => {
-    const status = billStatus(bill);
-    const card = document.createElement('div');
-    card.className = 'bill-card status-' + status;
-    const pillLabel = status === 'late' ? 'Atrasada' : status === 'pending' ? 'Pendente' : 'Paga';
+  // A conta em destaque é a próxima pendente (não atrasada, não paga) a vencer.
+  const highlightIdx = sorted.findIndex(b => billStatus(b) === 'pending');
+  const highlightBill = highlightIdx > -1 ? sorted[highlightIdx] : null;
+  const rest = highlightBill ? sorted.filter((b, i) => i !== highlightIdx) : sorted;
 
+  if(highlightBill){
+    const bill = highlightBill;
+    const card = document.createElement('div');
+    card.className = 'bill-highlight';
     card.innerHTML = `
-      <div class="bill-top">
-        <div class="bill-avatar">${billIcon(bill.name)}</div>
-        <div class="bill-info">
-          <div class="bill-name">${escapeHtml(bill.name)}</div>
-          <div class="bill-due">Vence em ${formatDateBR(bill.due)}${bill.hasOverride ? ' · valor ajustado' : ''}</div>
+      <div class="bill-highlight-badge">Próxima a vencer</div>
+      <div class="bill-highlight-top">
+        <div class="bill-highlight-avatar">${billIcon(bill.name)}</div>
+        <div class="bill-highlight-info">
+          <div class="bill-highlight-name">${escapeHtml(bill.name)}</div>
+          <div class="bill-highlight-due">Vence em ${formatDateBR(bill.due)}</div>
         </div>
-        <div class="bill-right">
-          <div class="bill-value">${bill.value ? formatCentsToBRL(bill.value) : '—'}</div>
-          <div class="bill-status ${status}">${pillLabel}</div>
+        <div class="bill-highlight-right">
+          <div class="bill-highlight-value">${bill.value ? formatCentsToBRL(bill.value) : '—'}</div>
         </div>
       </div>
-      <div class="bill-actions-row">
-        <div class="bill-icon-actions">
-          <button class="icon-action${bill.paid ? ' disabled' : ''}" data-edit-bill="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" ${bill.paid ? 'title="Desfaça o pagamento para editar"' : ''}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
-          </button>
-          <button class="icon-action${bill.origin === 'recurring' ? ' disabled' : ''}" data-del-bill="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}" ${bill.origin === 'recurring' ? 'title="Exclua na aba Recorrentes"' : ''}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z"/></svg>
-          </button>
-        </div>
-        ${status === 'paid'
-          ? `<button class="btn-undo" data-undo="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1015-6.7L3 13"/></svg>Desfazer</button>`
-          : `<button class="btn-pagar" data-pay="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>Pagar</button>`}
-      </div>
+      <button class="bill-highlight-pay" data-pay="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}">
+        Pagar agora
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
     `;
     container.appendChild(card);
+  }
+
+  rest.forEach(bill => {
+    const status = billStatus(bill);
+    const pillLabel = status === 'late' ? 'Atrasada' : status === 'pending' ? 'Pendente' : 'Paga';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'bill-swipe-wrap';
+    wrap.innerHTML = `
+      <div class="bill-swipe-actions">
+        <button class="swipe-btn swipe-more" data-more="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}" data-paid="${bill.paid?'1':'0'}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>
+          <span>Mais</span>
+        </button>
+        ${status === 'paid'
+          ? `<button class="swipe-btn swipe-pay undo" data-undo="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1015-6.7L3 13"/></svg><span>Desfazer</span></button>`
+          : `<button class="swipe-btn swipe-pay" data-pay="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg><span>Pagar</span></button>`}
+      </div>
+      <div class="bill-card bill-swipe-card status-${status}" data-swipe-card>
+        <div class="bill-top">
+          <div class="bill-avatar">${billIcon(bill.name)}</div>
+          <div class="bill-info">
+            <div class="bill-name">${escapeHtml(bill.name)}</div>
+            <div class="bill-due">Vence em ${formatDateBR(bill.due)}${bill.hasOverride ? ' · valor ajustado' : ''}</div>
+          </div>
+          <div class="bill-right">
+            <div class="bill-value">${bill.value ? formatCentsToBRL(bill.value) : '—'}</div>
+            <div class="bill-status ${status}">${pillLabel}</div>
+          </div>
+        </div>
+      </div>
+    `;
+    container.appendChild(wrap);
   });
 }
+
+/* ==========================================================================
+   ARRASTAR PRO LADO (swipe) — revela "Mais" (⋯) e "Pagar/Desfazer"
+   ========================================================================== */
+let swipeState = null; // { el, wrap, startX, baseX, currentX, dragging, moved }
+let openSwipeWrap = null;
+
+function closeOpenSwipe(){
+  if(openSwipeWrap){
+    const cardEl = openSwipeWrap.querySelector('[data-swipe-card]');
+    if(cardEl) cardEl.style.transform = 'translateX(0px)';
+    openSwipeWrap = null;
+  }
+}
+
+document.getElementById('billsList').addEventListener('pointerdown', (e)=>{
+  const cardEl = e.target.closest('[data-swipe-card]');
+  if(!cardEl) return;
+  const wrap = cardEl.closest('.bill-swipe-wrap');
+  if(openSwipeWrap && openSwipeWrap !== wrap) closeOpenSwipe();
+  const currentTransform = cardEl.style.transform;
+  const baseX = currentTransform ? parseFloat(currentTransform.replace(/[^-\d.]/g,'')) || 0 : 0;
+  swipeState = { el: cardEl, wrap, startX: e.clientX, baseX, currentX: baseX, dragging: true, moved: false };
+  cardEl.style.transition = 'none';
+  cardEl.setPointerCapture && cardEl.setPointerCapture(e.pointerId);
+});
+
+document.getElementById('billsList').addEventListener('pointermove', (e)=>{
+  if(!swipeState || !swipeState.dragging) return;
+  const deltaX = e.clientX - swipeState.startX;
+  if(Math.abs(deltaX) > 6) swipeState.moved = true;
+  let newX = swipeState.baseX + deltaX;
+  newX = Math.max(-SWIPE_ACTIONS_WIDTH, Math.min(0, newX));
+  swipeState.currentX = newX;
+  swipeState.el.style.transform = `translateX(${newX}px)`;
+});
+
+function endSwipe(){
+  if(!swipeState) return;
+  const { el, wrap, currentX, moved } = swipeState;
+  justDragged = moved;
+  el.style.transition = 'transform .2s ease';
+  if(currentX < -SWIPE_ACTIONS_WIDTH * 0.4){
+    el.style.transform = `translateX(${-SWIPE_ACTIONS_WIDTH}px)`;
+    openSwipeWrap = wrap;
+  }else{
+    el.style.transform = 'translateX(0px)';
+    if(openSwipeWrap === wrap) openSwipeWrap = null;
+  }
+  swipeState = null;
+}
+document.getElementById('billsList').addEventListener('pointerup', endSwipe);
+document.getElementById('billsList').addEventListener('pointercancel', endSwipe);
+
+
 
 /* ==========================================================================
    RENDER — CONTAS RECORRENTES
@@ -1250,25 +1394,67 @@ document.getElementById('deleteConfirm').addEventListener('click', ()=>{
 /* ==========================================================================
    DELEGAÇÃO DE CLIQUES (listas)
    ========================================================================== */
+let justDragged = false;
+
 document.getElementById('billsList').addEventListener('click', (e)=>{
+  if(justDragged){ justDragged = false; return; }
+
   const pay = e.target.closest('[data-pay]');
   const undo = e.target.closest('[data-undo]');
-  const edit = e.target.closest('[data-edit-bill]');
-  const del = e.target.closest('[data-del-bill]');
-  if(pay) openPayModal(pay.dataset.pay, pay.dataset.origin, pay.dataset.templateId, pay.dataset.name);
-  else if(undo) openUndoModal(undo.dataset.undo, undo.dataset.origin, undo.dataset.templateId, undo.dataset.name);
-  else if(edit){
-    const bill = getMonthBills(state.currentMonth).find(b=>b.id===edit.dataset.editBill);
-    if(!bill) return;
-    if(bill.paid){ showToast('Desfaça o pagamento para poder editar esta conta'); return; }
-    if(bill.origin === 'recurring') openEditRecurringOverride(bill);
-    else openEditBill(bill.id);
-  }else if(del){
-    const bill = getMonthBills(state.currentMonth).find(b=>b.id===del.dataset.delBill);
-    if(!bill) return;
-    if(bill.origin === 'recurring'){ showToast('Contas recorrentes só podem ser excluídas na aba "Recorrentes"'); return; }
-    openDeleteModal('bill', bill.id, bill.name, state.currentMonth);
+  const more = e.target.closest('[data-more]');
+  const swipeCard = e.target.closest('[data-swipe-card]');
+
+  if(more){
+    openBillActionsSheet(more.dataset.more, more.dataset.origin, more.dataset.templateId, more.dataset.name, more.dataset.paid === '1');
+    return;
   }
+  if(pay){ openPayModal(pay.dataset.pay, pay.dataset.origin, pay.dataset.templateId, pay.dataset.name); closeOpenSwipe(); return; }
+  if(undo){ openUndoModal(undo.dataset.undo, undo.dataset.origin, undo.dataset.templateId, undo.dataset.name); closeOpenSwipe(); return; }
+
+  if(swipeCard){
+    const wrap = swipeCard.closest('.bill-swipe-wrap');
+    if(openSwipeWrap === wrap){ closeOpenSwipe(); }
+  }
+});
+
+document.addEventListener('click', (e)=>{
+  if(openSwipeWrap && !e.target.closest('.bill-swipe-wrap')){
+    closeOpenSwipe();
+  }
+});
+
+/* ==========================================================================
+   AÇÕES DE UMA CONTA (menu "Mais" revelado pelo swipe): Editar / Excluir
+   ========================================================================== */
+let billActionsTarget = null; // { id, origin, templateId, name, paid }
+
+function openBillActionsSheet(id, origin, templateId, name, paid){
+  billActionsTarget = { id, origin, templateId, name, paid };
+  closeOpenSwipe();
+  const editBtn = document.getElementById('billActionsEdit');
+  const delBtn = document.getElementById('billActionsDelete');
+  editBtn.classList.toggle('disabled', paid);
+  delBtn.classList.toggle('disabled', origin === 'recurring');
+  openModal('modalBillActions');
+}
+
+document.getElementById('billActionsEdit').addEventListener('click', ()=>{
+  if(!billActionsTarget) return;
+  if(billActionsTarget.paid){ showToast('Desfaça o pagamento para poder editar esta conta'); return; }
+  closeModal('modalBillActions');
+  const bill = getMonthBills(state.currentMonth).find(b=>b.id===billActionsTarget.id);
+  if(!bill) return;
+  if(bill.origin === 'recurring') openEditRecurringOverride(bill);
+  else openEditBill(bill.id);
+});
+
+document.getElementById('billActionsDelete').addEventListener('click', ()=>{
+  if(!billActionsTarget) return;
+  if(billActionsTarget.origin === 'recurring'){ showToast('Contas recorrentes só podem ser excluídas na aba "Recorrentes"'); return; }
+  closeModal('modalBillActions');
+  const bill = getMonthBills(state.currentMonth).find(b=>b.id===billActionsTarget.id);
+  if(!bill) return;
+  openDeleteModal('bill', bill.id, bill.name, state.currentMonth);
 });
 
 document.getElementById('recurringList').addEventListener('click', (e)=>{
