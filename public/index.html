@@ -514,6 +514,7 @@ function ensureSignedIn(){
           // Trocou de conta (ex: digitou a senha de uma conta já existente
           // depois de reinstalar) — recarrega os dados dessa conta na tela.
           await loadState();
+          state.currentMonth = monthKey(new Date());
           renderMonth();
           renderRecurring();
         }
@@ -1303,6 +1304,7 @@ function isIOS(){
 async function init(){
   await ensureSignedIn();
   await loadState();
+  state.currentMonth = monthKey(new Date());
   renderMonth();
   renderRecurring();
   setView('month');
