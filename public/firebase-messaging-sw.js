@@ -24,7 +24,7 @@ const messaging = firebase.messaging();
 
 // Exibida quando o app está fechado ou em segundo plano
 messaging.onBackgroundMessage((payload) => {
-  const title = (payload.data && payload.data.title) || 'FinControl';
+  const title = (payload.data && payload.data.title) || 'FinUp';
   const body = (payload.data && payload.data.body) || '';
   self.registration.showNotification(title, { body, icon: undefined });
 });
