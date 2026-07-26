@@ -97,10 +97,10 @@
     box-shadow:0 2px 8px rgba(59,110,246,.15);
   }
   .month-nav button:active{ background:var(--primary-light); }
-  .month-nav .connector{ width:34px; height:1px; background:#c9d4ec; margin:0 12px; }
+  .month-nav .connector{ flex:1 1 auto; min-width:6px; max-width:28px; height:1px; background:#c9d4ec; margin:0 8px; }
   .month-nav .label{
-    font-weight:800; font-size:19px; color:var(--text); position:relative; cursor:pointer;
-    padding:4px 8px; letter-spacing:-.2px;
+    font-weight:800; font-size:clamp(15px, 4.8vw, 19px); color:var(--text); position:relative; cursor:pointer;
+    padding:4px 4px; letter-spacing:-.2px; white-space:nowrap; flex-shrink:0;
   }
   .month-nav input[type="month"]{ position:absolute; inset:0; opacity:0; cursor:pointer; }
 
