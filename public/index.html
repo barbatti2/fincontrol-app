@@ -666,6 +666,8 @@ function seedData(){
   };
 }
 
+const LOCAL_CACHE_KEY = 'fincontrol_state_cache';
+
 function applyStateFromData(data){
   state = {
     currentMonth: data.currentMonth || monthKey(new Date()),
@@ -675,6 +677,39 @@ function applyStateFromData(data){
     recurringOverrides: data.recurringOverrides || {},
     fcmTokens: data.fcmTokens || []
   };
+  saveLocalCache();
+}
+
+function saveLocalCache(){
+  try{
+    localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(state));
+  }catch(e){
+    // localStorage indisponível ou cheio — sem problema, só não cacheia.
+  }
+}
+
+/**
+ * Lê o último estado salvo localmente (localStorage), de forma síncrona.
+ * Ao contrário do cache do Firestore, isso é sempre confiável (não depende
+ * de IndexedDB, que pode falhar silenciosamente em PWA no iOS/Safari).
+ */
+function loadLocalCache(){
+  try{
+    const raw = localStorage.getItem(LOCAL_CACHE_KEY);
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    state = {
+      currentMonth: data.currentMonth || monthKey(new Date()),
+      recurring: data.recurring || [],
+      oneOffBills: data.oneOffBills || {},
+      recurringStatus: data.recurringStatus || {},
+      recurringOverrides: data.recurringOverrides || {},
+      fcmTokens: data.fcmTokens || []
+    };
+    return true;
+  }catch(e){
+    return false;
+  }
 }
 
 /**
@@ -717,6 +752,7 @@ async function loadState(){
 }
 
 async function saveState(){
+  saveLocalCache();
   if(!currentUid) return;
   try{
     await setDoc(doc(db, 'users', currentUid), {
@@ -869,7 +905,7 @@ function renderMonth(){
           <button class="icon-action${bill.paid ? ' disabled' : ''}" data-edit-bill="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" ${bill.paid ? 'title="Desfaça o pagamento para editar"' : ''}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
           </button>
-          <button class="icon-action" data-del-bill="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}">
+          <button class="icon-action${bill.origin === 'recurring' ? ' disabled' : ''}" data-del-bill="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}" ${bill.origin === 'recurring' ? 'title="Exclua na aba Recorrentes"' : ''}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z"/></svg>
           </button>
         </div>
@@ -1230,8 +1266,8 @@ document.getElementById('billsList').addEventListener('click', (e)=>{
   }else if(del){
     const bill = getMonthBills(state.currentMonth).find(b=>b.id===del.dataset.delBill);
     if(!bill) return;
-    if(bill.origin === 'recurring') openDeleteModal('rec', bill.templateId, bill.name);
-    else openDeleteModal('bill', bill.id, bill.name, state.currentMonth);
+    if(bill.origin === 'recurring'){ showToast('Contas recorrentes só podem ser excluídas na aba "Recorrentes"'); return; }
+    openDeleteModal('bill', bill.id, bill.name, state.currentMonth);
   }
 });
 
@@ -1302,6 +1338,15 @@ function isIOS(){
 }
 
 async function init(){
+  // Pinta a tela na hora com o que já está salvo neste aparelho (localStorage),
+  // sem esperar autenticação nem rede — só depois disso é que fala com o Firebase.
+  if(loadLocalCache()){
+    state.currentMonth = monthKey(new Date());
+    renderMonth();
+    renderRecurring();
+    setView('month');
+  }
+
   await ensureSignedIn();
   await loadState();
   state.currentMonth = monthKey(new Date());
