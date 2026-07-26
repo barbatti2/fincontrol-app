@@ -81,7 +81,7 @@ async function run() {
           tokens.forEach((token) => {
             sends.push(
               admin.messaging()
-                .send({ token, data: { title: 'FinControl', body } })
+                .send({ token, data: { title: 'FinUp', body } })
                 .then(() => console.log(`    -> notificação enviada para token ...${token.slice(-8)}`))
                 .catch((err) => console.error(`    -> ERRO ao enviar para token ...${token.slice(-8)}:`, err.message))
             );
