@@ -54,7 +54,11 @@
     padding-top:calc(14px + env(safe-area-inset-top, 0px));
     display:flex; align-items:center; justify-content:space-between;
   }
-  header.topbar .brand{ color:#fff; font-weight:800; font-size:19px; letter-spacing:-.2px; }
+  header.topbar .brand{ color:#fff; font-weight:800; font-size:19px; letter-spacing:-.2px; display:flex; align-items:center; gap:4px; }
+  .brand-up{
+    display:inline-flex; align-items:center; border:1.5px solid #8FDBFF; border-radius:5px;
+    padding:0 4px; color:#8FDBFF; line-height:1.15;
+  }
   .icon-btn{
     width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
     display:flex;align-items:center;justify-content:center;
@@ -274,7 +278,7 @@
 <body>
 
 <header class="topbar">
-  <div class="brand">FinUp</div>
+  <div class="brand">Fin<span class="brand-up">Up</span></div>
   <div class="header-actions">
     <div class="view-toggle" id="viewToggle" role="tablist" aria-label="Alternar visão">
       <span class="view-toggle-thumb" id="viewToggleThumb"></span>
