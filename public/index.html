@@ -139,13 +139,20 @@
     box-shadow:0 20px 60px rgba(16,25,58,.28); text-align:center;
   }
   .lock-icon{
-    width:58px; height:58px; border-radius:50%; background:var(--primary-light); color:var(--primary-dark);
-    display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:26px;
+  width:58px; height:58px; border-radius:50%; background:var(--primary-light); color:var(--primary-dark);
+  display:flex; align-items:center; justify-content:center; margin:0 auto 14px;
   }
+
+  /* Regra nova para ajustar o tamanho do ícone SVG dentro do círculo */
+  .lock-icon svg {
+    width: 26px;
+    height: 26px;
+  }
+  
   .lock-card h2{ margin:0 0 6px; font-size:19px; letter-spacing:-.3px; }
   .lock-card .field{ text-align:left; }
   .btn-new:active{ opacity:.88; }
-
+  
   .section-title{ font-size:15px; font-weight:800; margin:4px 2px 12px; }
 
   /* ---------- Bill card ---------- */
