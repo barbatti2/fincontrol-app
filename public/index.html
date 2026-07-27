@@ -15,6 +15,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
 <style>
   :root{
     --primary:#3B6EF6;
@@ -519,7 +520,7 @@
 <!-- Tela de bloqueio: aparece sempre que o app abre, com o fundo borrado -->
 <div class="lock-screen hidden" id="lockScreen">
   <div class="lock-card">
-    <div class="lock-icon">🔒</div>
+    <i data-lucide="lock"></i>
     <h2 id="lockTitle">Digite sua senha</h2>
     <p id="lockDesc" class="auth-desc">Digite a senha para acessar o FinUp.</p>
     <div class="field">
@@ -528,7 +529,7 @@
     <div class="field hidden" id="lockConfirmField">
       <input type="password" id="lockPasswordConfirm" placeholder="Confirmar senha" autocomplete="new-password">
     </div>
-    <button class="btn-primary" id="lockSubmit">Desbloquear</button>
+    <button class="btn-primary" id="lockSubmit">Acessar</button>
   </div>
 </div>
 
