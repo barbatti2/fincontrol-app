@@ -151,24 +151,24 @@
   /* ---------- Bill card ---------- */
   #billsList{ display:flex; flex-direction:column; gap:var(--gap); }
   .bill-card{
-    background:var(--card); border-radius:var(--radius); padding:10px 12px;
+    background:var(--card); border-radius:var(--radius); padding:13px 14px;
     box-shadow:0 1px 6px rgba(20,60,55,.05);
     border-left:4px solid transparent;
   }
   .bill-card.status-late{ border-left-color:var(--red); }
   .bill-card.status-pending{ border-left-color:var(--amber); }
   .bill-card.status-paid{ border-left-color:var(--green); }
-  .bill-top{ display:flex; align-items:center; gap:10px; }
+  .bill-top{ display:flex; align-items:center; gap:11px; }
   .bill-avatar{
-    width:36px; height:36px; border-radius:50%; background:var(--primary-light); color:var(--primary-dark);
+    width:42px; height:42px; border-radius:50%; background:var(--primary-light); color:var(--primary-dark);
     display:flex; align-items:center; justify-content:center; flex-shrink:0;
   }
   .bill-info{ flex:1; min-width:0; }
-  .bill-name{ font-weight:700; font-size:14px; }
-  .bill-due{ color:var(--muted); font-size:11.5px; margin-top:1px; }
+  .bill-name{ font-weight:700; font-size:15px; }
+  .bill-due{ color:var(--muted); font-size:12.5px; margin-top:1px; }
   .bill-right{ text-align:right; flex-shrink:0; }
-  .bill-value{ font-size:14px; font-weight:800; }
-  .bill-status{ font-size:11px; font-weight:700; margin-top:1px; }
+  .bill-value{ font-size:15px; font-weight:800; }
+  .bill-status{ font-size:12px; font-weight:700; margin-top:2px; }
   .bill-status.late{ color:var(--red); }
   .bill-status.pending{ color:var(--amber); }
   .bill-status.paid{ color:var(--green); }
@@ -217,20 +217,21 @@
   .bill-highlight-pay:active{ opacity:.88; }
 
   /* ---------- Arrastar pro lado (swipe) ---------- */
-  .bill-swipe-wrap{ position:relative; border-radius:var(--radius); overflow:hidden; }
+  .bill-swipe-wrap{ position:relative; border-radius:var(--radius); }
   .bill-swipe-actions{
     position:absolute; top:0; right:0; bottom:0; width:132px; display:flex;
+    border-radius:var(--radius); overflow:hidden;
   }
   .swipe-btn{
     flex:1; border:none; display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:3px; color:#fff; font-size:11px; font-weight:700; cursor:pointer; padding:0;
   }
-  .swipe-more{ background:#98a2b8; }
+  .swipe-more{ background:#9aa4b8; }
   .swipe-pay{ background:var(--primary); }
-  .swipe-pay.undo{ background:#8a94a6; }
+  .swipe-pay.undo{ background:#E08A2E; }
   .bill-swipe-card{
     position:relative; z-index:1; touch-action:pan-y; user-select:none;
-    -webkit-user-select:none;
+    -webkit-user-select:none; border-radius:var(--radius);
   }
   .empty-state .icon{ font-size:34px; margin-bottom:10px; }
 
@@ -896,12 +897,12 @@ function billStatus(bill){
 
 /* Ícone por categoria (baseado no nome da conta) */
 const ICONS = {
-  water: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.7s6 6.5 6 11a6 6 0 01-12 0c0-4.5 6-11 6-11z"/></svg>`,
-  card: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>`,
-  bulb: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0012 2z"/></svg>`,
-  wifi: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13a10 10 0 0114 0M8.5 16.5a5 5 0 017 0"/><circle cx="12" cy="20" r="1" fill="currentColor" stroke="none"/></svg>`,
-  home: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>`,
-  receipt: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>`
+  water: `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.7s6 6.5 6 11a6 6 0 01-12 0c0-4.5 6-11 6-11z"/></svg>`,
+  card: `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>`,
+  bulb: `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0012 2z"/></svg>`,
+  wifi: `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13a10 10 0 0114 0M8.5 16.5a5 5 0 017 0"/><circle cx="12" cy="20" r="1" fill="currentColor" stroke="none"/></svg>`,
+  home: `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>`,
+  receipt: `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>`
 };
 function billIcon(name){
   const n = (name||'').toLowerCase();
@@ -945,7 +946,8 @@ function renderMonth(){
   }
 
   // A conta em destaque é a próxima pendente (não atrasada, não paga) a vencer.
-  const highlightIdx = sorted.findIndex(b => billStatus(b) === 'pending');
+  const todayStr = (()=>{ const t=todayISO(); return `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`; })();
+  const highlightIdx = sorted.findIndex(b => !b.paid && b.due === todayStr);
   const highlightBill = highlightIdx > -1 ? sorted[highlightIdx] : null;
   const rest = highlightBill ? sorted.filter((b, i) => i !== highlightIdx) : sorted;
 
@@ -954,7 +956,7 @@ function renderMonth(){
     const card = document.createElement('div');
     card.className = 'bill-highlight';
     card.innerHTML = `
-      <div class="bill-highlight-badge">Próxima a vencer</div>
+      <div class="bill-highlight-badge">Vence hoje</div>
       <div class="bill-highlight-top">
         <div class="bill-highlight-avatar">${billIcon(bill.name)}</div>
         <div class="bill-highlight-info">
@@ -1010,13 +1012,17 @@ function renderMonth(){
 /* ==========================================================================
    ARRASTAR PRO LADO (swipe) — revela "Mais" (⋯) e "Pagar/Desfazer"
    ========================================================================== */
-let swipeState = null; // { el, wrap, startX, baseX, currentX, dragging, moved }
+let swipeState = null; // { el, wrap, startX, startY, baseX, currentX, phase, moved }
 let openSwipeWrap = null;
+const SWIPE_LOCK_THRESHOLD = 8; // px de movimento antes de decidir horizontal x vertical
 
 function closeOpenSwipe(){
   if(openSwipeWrap){
     const cardEl = openSwipeWrap.querySelector('[data-swipe-card]');
-    if(cardEl) cardEl.style.transform = 'translateX(0px)';
+    if(cardEl){
+      cardEl.style.transition = 'transform .2s ease';
+      cardEl.style.transform = 'translateX(0px)';
+    }
     openSwipeWrap = null;
   }
 }
@@ -1028,32 +1034,49 @@ document.getElementById('billsList').addEventListener('pointerdown', (e)=>{
   if(openSwipeWrap && openSwipeWrap !== wrap) closeOpenSwipe();
   const currentTransform = cardEl.style.transform;
   const baseX = currentTransform ? parseFloat(currentTransform.replace(/[^-\d.]/g,'')) || 0 : 0;
-  swipeState = { el: cardEl, wrap, startX: e.clientX, baseX, currentX: baseX, dragging: true, moved: false };
+  // "pending": ainda não sabemos se é arrasto horizontal (swipe) ou vertical (rolar a página)
+  swipeState = { el: cardEl, wrap, startX: e.clientX, startY: e.clientY, baseX, currentX: baseX, phase: 'pending', moved: false, pointerId: e.pointerId };
   cardEl.style.transition = 'none';
-  cardEl.setPointerCapture && cardEl.setPointerCapture(e.pointerId);
 });
 
 document.getElementById('billsList').addEventListener('pointermove', (e)=>{
-  if(!swipeState || !swipeState.dragging) return;
+  if(!swipeState) return;
   const deltaX = e.clientX - swipeState.startX;
-  if(Math.abs(deltaX) > 6) swipeState.moved = true;
+  const deltaY = e.clientY - swipeState.startY;
+
+  if(swipeState.phase === 'pending'){
+    if(Math.abs(deltaX) < SWIPE_LOCK_THRESHOLD && Math.abs(deltaY) < SWIPE_LOCK_THRESHOLD) return;
+    if(Math.abs(deltaX) > Math.abs(deltaY)){
+      swipeState.phase = 'horizontal';
+      swipeState.el.setPointerCapture && swipeState.el.setPointerCapture(swipeState.pointerId);
+    }else{
+      swipeState.phase = 'vertical';
+      return; // deixa o navegador rolar a página normalmente
+    }
+  }
+
+  if(swipeState.phase !== 'horizontal') return;
+  e.preventDefault();
+  swipeState.moved = true;
   let newX = swipeState.baseX + deltaX;
   newX = Math.max(-SWIPE_ACTIONS_WIDTH, Math.min(0, newX));
   swipeState.currentX = newX;
   swipeState.el.style.transform = `translateX(${newX}px)`;
-});
+}, { passive: false });
 
 function endSwipe(){
   if(!swipeState) return;
-  const { el, wrap, currentX, moved } = swipeState;
-  justDragged = moved;
-  el.style.transition = 'transform .2s ease';
-  if(currentX < -SWIPE_ACTIONS_WIDTH * 0.4){
-    el.style.transform = `translateX(${-SWIPE_ACTIONS_WIDTH}px)`;
-    openSwipeWrap = wrap;
-  }else{
-    el.style.transform = 'translateX(0px)';
-    if(openSwipeWrap === wrap) openSwipeWrap = null;
+  const { el, wrap, currentX, moved, phase } = swipeState;
+  justDragged = moved && phase === 'horizontal';
+  if(phase === 'horizontal'){
+    el.style.transition = 'transform .2s ease';
+    if(currentX < -SWIPE_ACTIONS_WIDTH * 0.5){
+      el.style.transform = `translateX(${-SWIPE_ACTIONS_WIDTH}px)`;
+      openSwipeWrap = wrap;
+    }else{
+      el.style.transform = 'translateX(0px)';
+      if(openSwipeWrap === wrap) openSwipeWrap = null;
+    }
   }
   swipeState = null;
 }
