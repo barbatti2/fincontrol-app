@@ -24,4 +24,4 @@ jobs:
       - name: Publicar no Firebase (Hosting + Firestore rules)
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /home/runner/gcp-key.json
-        run: firebase deploy --project fincontrol-app-bb06f --only hosting,firestore --non-interactive
+        run: firebase deploy --project fincontrol-app-bb06f --only hosting:fincontrol-app-bb06f,hosting:meufinup,firestore --non-interactive
