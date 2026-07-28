@@ -86,21 +86,24 @@
   }
   .view-toggle-btn.active{ color:var(--primary-dark); }
 
-  /* ---------- Month nav ---------- */
+  /* ---------- Card do mês ---------- */
+  .month-card{
+    background:var(--gradient); border-radius:22px; padding:20px 18px 22px; margin-bottom:18px;
+    box-shadow:0 8px 24px rgba(30,63,174,.25);
+  }
+  .month-card-title{ color:#fff; text-align:center; font-size:19px; font-weight:800; margin:0 0 16px; letter-spacing:-.3px; }
   .month-nav{
-    display:flex; align-items:center; justify-content:center; gap:0; margin-bottom:16px;
+    background:#fff; border-radius:999px; display:flex; align-items:center; justify-content:space-between;
+    padding:8px; box-shadow:0 4px 14px rgba(11,30,91,.12);
   }
   .month-nav button{
-    background:#fff; border:2px solid var(--primary); color:var(--primary);
-    width:38px; height:38px; border-radius:50%; cursor:pointer; flex-shrink:0;
-    display:flex; align-items:center; justify-content:center;
-    box-shadow:0 2px 8px rgba(59,110,246,.15);
+    background:none; border:none; color:var(--primary-dark); width:34px; height:34px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
   }
   .month-nav button:active{ background:var(--primary-light); }
-  .month-nav .connector{ flex:1 1 auto; min-width:6px; max-width:28px; height:1px; background:#c9d4ec; margin:0 8px; }
   .month-nav .label{
-    font-weight:800; font-size:clamp(15px, 4.8vw, 19px); color:var(--text); position:relative; cursor:pointer;
-    padding:4px 4px; letter-spacing:-.2px; white-space:nowrap; flex-shrink:0;
+    flex:1; text-align:center; font-weight:800; font-size:clamp(15px, 4.8vw, 18px); color:var(--text);
+    position:relative; cursor:pointer; white-space:nowrap; letter-spacing:-.2px;
   }
   .month-nav input[type="month"]{ position:absolute; inset:0; opacity:0; cursor:pointer; }
 
@@ -118,11 +121,14 @@
   .summary-card .val{ font-size:23px; font-weight:800; letter-spacing:-.3px; }
   .summary-wave{ position:absolute; left:0; right:0; bottom:0; width:100%; height:34px; opacity:.18; }
 
-  .btn-new{
-    width:100%; background:var(--gradient); color:#fff; border:none; border-radius:var(--radius);
-    padding:15px; font-size:15.5px; font-weight:700; display:flex; align-items:center;
-    justify-content:center; gap:8px; cursor:pointer; margin-bottom:18px; box-shadow:0 4px 14px rgba(59,110,246,.35);
+  .fab-add{
+    position:fixed; right:20px; bottom:calc(22px + env(safe-area-inset-bottom, 0px));
+    width:58px; height:58px; border-radius:50%; background:var(--gradient); border:none; color:#fff;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:60;
+    box-shadow:0 8px 22px rgba(30,63,174,.4);
   }
+  .fab-add:active{ opacity:.88; }
+  .fab-add.hidden{ display:none !important; }
 
   .auth-desc{ color:var(--muted); font-size:13.5px; margin:-6px 0 14px; line-height:1.5; }
 
@@ -192,13 +198,15 @@
 
   /* ---------- Card de destaque (próxima a vencer) ---------- */
   .bill-highlight{
-    background:var(--gradient); border-radius:var(--radius); padding:14px 16px 16px; color:#fff;
+    background:var(--gradient); border-radius:var(--radius); padding:14px 16px; color:#fff;
     box-shadow:0 10px 26px rgba(30,63,174,.32); margin-bottom:var(--gap);
   }
+  .bill-highlight-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
   .bill-highlight-badge{
     display:inline-block; background:rgba(255,255,255,.24); color:#fff; font-size:10.5px; font-weight:800;
-    letter-spacing:.3px; text-transform:uppercase; padding:4px 9px; border-radius:7px; margin-bottom:11px;
+    letter-spacing:.3px; text-transform:uppercase; padding:4px 9px; border-radius:7px;
   }
+  .bill-highlight-value{ font-size:15px; font-weight:800; opacity:.9; }
   .bill-highlight-top{ display:flex; align-items:center; gap:10px; }
   .bill-highlight-avatar{
     width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.22); color:#fff;
@@ -207,14 +215,10 @@
   .bill-highlight-info{ flex:1; min-width:0; }
   .bill-highlight-name{ font-weight:800; font-size:15.5px; }
   .bill-highlight-due{ font-size:12px; opacity:.85; margin-top:1px; }
-  .bill-highlight-right{ text-align:right; flex-shrink:0; }
-  .bill-highlight-value{ font-size:16.5px; font-weight:800; }
-  .bill-highlight-divider{ height:1px; background:rgba(255,255,255,.25); margin:14px 0 12px; }
-  .bill-highlight-actions{ display:flex; justify-content:flex-end; }
   .bill-highlight-pay{
-    background:#fff; color:var(--primary-dark); border:none; border-radius:11px;
-    padding:10px 18px; font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center;
-    gap:7px; cursor:pointer;
+    background:#fff; color:var(--primary-dark); border:none; border-radius:11px; flex-shrink:0;
+    padding:10px 16px; font-weight:800; font-size:13.5px; display:flex; align-items:center; justify-content:center;
+    gap:6px; cursor:pointer;
   }
   .bill-highlight-pay:active{ opacity:.88; }
 
@@ -349,20 +353,20 @@
 
 <main>
   <section id="viewMonth">
-    <h1 class="page-title">Contas do mês</h1>
-    <div class="month-nav">
-      <button id="prevMonth" aria-label="Mês anterior">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-      </button>
-      <span class="connector"></span>
-      <div class="label" id="monthLabelWrap">
-        <span id="monthLabel">Julho / 2026</span>
-        <input type="month" id="monthPicker">
+    <div class="month-card">
+      <h1 class="month-card-title">Contas do mês</h1>
+      <div class="month-nav">
+        <button id="prevMonth" aria-label="Mês anterior">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div class="label" id="monthLabelWrap">
+          <span id="monthLabel">Julho - 2026</span>
+          <input type="month" id="monthPicker">
+        </div>
+        <button id="nextMonth" aria-label="Próximo mês">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
       </div>
-      <span class="connector"></span>
-      <button id="nextMonth" aria-label="Próximo mês">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-      </button>
     </div>
 
     <div class="summary-card">
@@ -371,11 +375,6 @@
       <div class="col"><div class="lab paid">Pagas</div><div class="val" id="totalPaid">R$ 0,00</div></div>
       <svg class="summary-wave" viewBox="0 0 500 40" preserveAspectRatio="none"><path d="M0,25 C150,0 350,45 500,15 L500,40 L0,40 Z" fill="var(--primary)"/></svg>
     </div>
-
-    <button class="btn-new" id="btnNewBill">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-      Nova conta
-    </button>
 
     <div class="section-title">Próximas contas</div>
     <div id="billsList"></div>
@@ -401,6 +400,10 @@
     <div id="recurringList"></div>
   </section>
 </main>
+
+<button class="fab-add" id="btnNewBill" aria-label="Nova conta">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+</button>
 
 <!-- Modal: Nova/editar conta do mês -->
 <div class="overlay" id="modalBill">
@@ -874,7 +877,7 @@ function formatDateBR(iso){
 function formatMonthLabel(key){
   const [y,m] = key.split('-').map(Number);
   const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  return `${meses[m-1]} / ${y}`;
+  return `${meses[m-1]} - ${y}`;
 }
 
 function attachCurrencyMask(input){
@@ -960,22 +963,19 @@ function renderMonth(){
     const card = document.createElement('div');
     card.className = 'bill-highlight';
     card.innerHTML = `
-      <div class="bill-highlight-badge">Vence hoje</div>
+      <div class="bill-highlight-header">
+        <div class="bill-highlight-badge">Vence hoje</div>
+        <div class="bill-highlight-value">${bill.value ? formatCentsToBRL(bill.value) : '—'}</div>
+      </div>
       <div class="bill-highlight-top">
         <div class="bill-highlight-avatar">${billIcon(bill.name)}</div>
         <div class="bill-highlight-info">
           <div class="bill-highlight-name">${escapeHtml(bill.name)}</div>
           <div class="bill-highlight-due">Vence em ${formatDateBR(bill.due)}</div>
         </div>
-        <div class="bill-highlight-right">
-          <div class="bill-highlight-value">${bill.value ? formatCentsToBRL(bill.value) : '—'}</div>
-        </div>
-      </div>
-      <div class="bill-highlight-divider"></div>
-      <div class="bill-highlight-actions">
         <button class="bill-highlight-pay" data-pay="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}">
           Pagar agora
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </button>
       </div>
     `;
@@ -1165,6 +1165,7 @@ document.querySelectorAll('.view-toggle-btn').forEach(btn=>{
 function setView(view){
   document.getElementById('viewMonth').classList.toggle('hidden', view !== 'month');
   document.getElementById('viewRecurring').classList.toggle('hidden', view !== 'recurring');
+  document.getElementById('btnNewBill').classList.toggle('hidden', view !== 'month');
   const activeBtn = document.querySelector(`.view-toggle-btn[data-view="${view}"]`);
   document.querySelectorAll('.view-toggle-btn').forEach(b=>{
     const isActive = b === activeBtn;
@@ -1221,7 +1222,9 @@ document.getElementById('btnNewBill').addEventListener('click', ()=>{
   document.getElementById('billSubmit').textContent = 'Adicionar';
   billNameEl.value = ''; billNameEl.disabled = false;
   setCurrencyValue(billValueEl, null);
-  billDueEl.value = `${state.currentMonth}-10`; billDueEl.disabled = false;
+  const today = todayISO();
+  billDueEl.value = `${today.getFullYear()}-${pad2(today.getMonth()+1)}-${pad2(today.getDate())}`;
+  billDueEl.disabled = false;
   billNoteEl.value = '';
   openModal('modalBill');
 });
