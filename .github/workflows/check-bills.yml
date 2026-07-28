@@ -3,8 +3,8 @@ name: Verificar contas a vencer
 on:
   schedule:
     # Cron do GitHub Actions é sempre em UTC.
-    # 09:00 no horário de Brasília (UTC-3) = 12:00 UTC.
-    - cron: '0 12 * * *'
+    # 09:00 no horário de Brasília (UTC-3) = 11:00 UTC.
+    - cron: '0 11 * * *'
   workflow_dispatch: {}   # permite rodar manualmente pela aba Actions, pra testar
 
 jobs:
