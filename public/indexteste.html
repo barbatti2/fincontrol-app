@@ -88,28 +88,31 @@
 
   /* ---------- Card de seleção de mês ---------- */
   .month-card{
-    background:var(--gradient); border-radius:20px; padding:20px 20px 30px; margin-bottom:18px;
+    background:var(--gradient); border-radius:20px 20px 10px 10px; padding:20px 18px 32px; margin-bottom:18px;
     position:relative; overflow:hidden; box-shadow:0 10px 26px rgba(30,63,174,.3);
   }
+  .month-card-row{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    position:relative; z-index:1;
+  }
   .month-card-title{
-    color:#fff; font-weight:800; font-size:17px; text-align:center; margin:0 0 14px;
-    letter-spacing:-.2px; position:relative; z-index:1;
+    color:#fff; font-weight:800; font-size:16.5px; letter-spacing:-.2px; flex-shrink:0;
   }
   .month-nav{
-    background:#fff; border-radius:999px; padding:11px 18px; display:flex; align-items:center;
-    justify-content:space-between; box-shadow:0 4px 14px rgba(20,40,90,.14); position:relative; z-index:1;
+    background:#fff; border-radius:999px; padding:9px 14px; display:flex; align-items:center;
+    gap:8px; box-shadow:0 4px 14px rgba(20,40,90,.14); flex-shrink:0;
   }
   .month-nav button{
-    background:none; border:none; color:var(--primary); cursor:pointer; flex-shrink:0; padding:4px;
+    background:none; border:none; color:var(--primary); cursor:pointer; flex-shrink:0; padding:2px;
     display:flex; align-items:center; justify-content:center;
   }
   .month-nav button:active{ opacity:.55; }
   .month-nav .label{
-    flex:1; text-align:center; font-weight:800; font-size:clamp(15px, 4.8vw, 19px); color:var(--text);
+    text-align:center; font-weight:800; font-size:15px; color:var(--text);
     position:relative; cursor:pointer; letter-spacing:-.2px; white-space:nowrap;
   }
   .month-nav input[type="month"]{ position:absolute; inset:0; opacity:0; cursor:pointer; }
-  .month-card-wave{ position:absolute; left:0; right:0; bottom:0; width:100%; height:34px; display:block; z-index:0; }
+  .month-card-wave{ position:absolute; left:0; right:0; bottom:0; width:100%; height:44px; display:block; z-index:0; }
 
   /* ---------- Summary card ---------- */
   .summary-card{
@@ -356,20 +359,22 @@
 <main>
   <section id="viewMonth">
     <div class="month-card">
-      <div class="month-card-title">Contas do mês</div>
-      <div class="month-nav">
-        <button id="prevMonth" aria-label="Mês anterior">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <div class="label" id="monthLabelWrap">
-          <span id="monthLabel">Julho / 2026</span>
-          <input type="month" id="monthPicker">
+      <div class="month-card-row">
+        <div class="month-card-title">Contas do mês</div>
+        <div class="month-nav">
+          <button id="prevMonth" aria-label="Mês anterior">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <div class="label" id="monthLabelWrap">
+            <span id="monthLabel">Julho / 2026</span>
+            <input type="month" id="monthPicker">
+          </div>
+          <button id="nextMonth" aria-label="Próximo mês">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
         </div>
-        <button id="nextMonth" aria-label="Próximo mês">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-        </button>
       </div>
-      <svg class="month-card-wave" viewBox="0 0 500 40" preserveAspectRatio="none"><path d="M0,0 C150,34 350,34 500,0 L500,40 L0,40 Z" fill="var(--bg)"/></svg>
+      <svg class="month-card-wave" viewBox="0 0 500 44" preserveAspectRatio="none"><path d="M0,0 C60,26 120,4 180,20 C240,36 300,10 360,26 C420,40 460,18 500,0 L500,44 L0,44 Z" fill="var(--bg)"/></svg>
     </div>
 
     <div class="summary-card">
