@@ -139,20 +139,13 @@
     box-shadow:0 20px 60px rgba(16,25,58,.28); text-align:center;
   }
   .lock-icon{
-  width:58px; height:58px; border-radius:50%; background:var(--primary-light); color:var(--primary-dark);
-  display:flex; align-items:center; justify-content:center; margin:0 auto 14px;
+    width:58px; height:58px; border-radius:50%; background:var(--primary-light); color:var(--primary-dark);
+    display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:26px;
   }
-
-  /* Regra nova para ajustar o tamanho do ícone SVG dentro do círculo */
-  .lock-icon svg {
-    width: 26px;
-    height: 26px;
-  }
-  
   .lock-card h2{ margin:0 0 6px; font-size:19px; letter-spacing:-.3px; }
   .lock-card .field{ text-align:left; }
   .btn-new:active{ opacity:.88; }
-  
+
   .section-title{ font-size:15px; font-weight:800; margin:4px 2px 12px; }
 
   /* ---------- Bill card ---------- */
@@ -216,9 +209,11 @@
   .bill-highlight-due{ font-size:12px; opacity:.85; margin-top:1px; }
   .bill-highlight-right{ text-align:right; flex-shrink:0; }
   .bill-highlight-value{ font-size:16.5px; font-weight:800; }
+  .bill-highlight-divider{ height:1px; background:rgba(255,255,255,.25); margin:14px 0 12px; }
+  .bill-highlight-actions{ display:flex; justify-content:flex-end; }
   .bill-highlight-pay{
-    margin-top:13px; width:100%; background:#fff; color:var(--primary-dark); border:none; border-radius:11px;
-    padding:11px; font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center;
+    background:#fff; color:var(--primary-dark); border:none; border-radius:11px;
+    padding:10px 18px; font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center;
     gap:7px; cursor:pointer;
   }
   .bill-highlight-pay:active{ opacity:.88; }
@@ -321,12 +316,11 @@
 
   .toast{
     position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
-    background:var(--primary-dark); color:#fff; padding:12px 20px; border-radius:999px;
-    font-size:13.5px; font-weight:600; line-height:1.35; z-index:200; opacity:0; pointer-events:none;
-    transition:opacity .25s, transform .25s; box-shadow:0 8px 24px rgba(0,0,0,.22);
-    width:max-content; max-width:min(320px, 86vw); text-align:center;
+    background:var(--primary-dark); color:#fff; padding:11px 18px; border-radius:12px;
+    font-size:14px; font-weight:600; z-index:200; opacity:0; pointer-events:none;
+    transition:opacity .25s, transform .25s; box-shadow:0 6px 20px rgba(0,0,0,.2);
+    max-width:88vw; text-align:center;
   }
-
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(-6px); pointer-events:auto; cursor:pointer; }
 
   .hidden{ display:none !important; }
@@ -526,12 +520,7 @@
 <!-- Tela de bloqueio: aparece sempre que o app abre, com o fundo borrado -->
 <div class="lock-screen hidden" id="lockScreen">
   <div class="lock-card">
-    <div class="lock-icon">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
-        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-      </svg>
-    </div>
+    <div class="lock-icon">🔒</div>
     <h2 id="lockTitle">Digite sua senha</h2>
     <p id="lockDesc" class="auth-desc">Digite a senha para acessar o FinUp.</p>
     <div class="field">
@@ -540,7 +529,8 @@
     <div class="field hidden" id="lockConfirmField">
       <input type="password" id="lockPasswordConfirm" placeholder="Confirmar senha" autocomplete="new-password">
     </div>
-    <button class="btn-primary" id="lockSubmit">Acessar</button>
+    <button class="btn-primary" id="lockSubmit">Desbloquear</button>
+    <button class="btn-cancel" id="lockSwitchMode">Ainda não configurei uma senha</button>
   </div>
 </div>
 
@@ -548,7 +538,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import { getAuth, signInAnonymously, onAuthStateChanged, signInWithEmailAndPassword, EmailAuthProvider, linkWithCredential } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, getDocFromCache, setDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging.js";
 
@@ -587,6 +577,8 @@ function ensureSignedIn(){
         const uidChanged = currentUid !== null && currentUid !== user.uid;
         currentUid = user.uid;
         if(uidChanged){
+          // Trocou de conta (ex: digitou a senha de uma conta já existente
+          // depois de reinstalar) — recarrega os dados dessa conta na tela.
           await loadState();
           state.currentMonth = monthKey(new Date());
           renderMonth();
@@ -597,20 +589,17 @@ function ensureSignedIn(){
           const lastUnlock = parseInt(localStorage.getItem('fincontrol_last_unlock') || '0', 10);
           const aindaDentroDaJanela = (Date.now() - lastUnlock) < LOCK_DURATION_MS;
           if(aindaDentroDaJanela){
-            markUnlocked();
+            markUnlocked(); // renova a janela de 24h a partir de agora
           }else{
-            showLock();
+            showLock(user.isAnonymous ? 'create' : 'unlock');
           }
           resolve(user.uid);
         }
       }else{
-        // Ninguém autenticado neste aparelho ainda — não cria conta
-        // sozinho, só pede a senha já configurada.
-        if(!resolved){
-          resolved = true;
-          showLock();
-          resolve(null);
-        }
+        // Sem sessão salva (ex: reinstalou o app) — continua funcionando
+        // por baixo dos panos com um perfil novo, sem travar nada; a tela
+        // de bloqueio acima é quem decide o que o usuário consegue ver.
+        signInAnonymously(fbAuth).catch(e => console.error('Erro no login anônimo:', e));
       }
     });
   });
@@ -627,12 +616,34 @@ function ensureSignedIn(){
    Fica desbloqueado por 24h (LOCK_DURATION_MS) — só pede a senha de novo
    depois que esse tempo passar.
    ========================================================================== */
+let lockMode = 'unlock';
+
 function markUnlocked(){
   localStorage.setItem('fincontrol_last_unlock', String(Date.now()));
 }
 
-function showLock(){
+function showLock(mode){
+  lockMode = mode;
   document.getElementById('lockPassword').value = '';
+  document.getElementById('lockPasswordConfirm').value = '';
+  const title = document.getElementById('lockTitle');
+  const desc = document.getElementById('lockDesc');
+  const confirmField = document.getElementById('lockConfirmField');
+  const submit = document.getElementById('lockSubmit');
+  const switchBtn = document.getElementById('lockSwitchMode');
+  if(mode === 'create'){
+    title.textContent = 'Crie uma senha';
+    desc.textContent = 'Essa senha protege seus dados: mesmo reinstalando o app, você acessa as mesmas contas sem perder nada.';
+    confirmField.classList.remove('hidden');
+    submit.textContent = 'Criar senha e continuar';
+    switchBtn.textContent = 'Já tenho uma senha, entrar';
+  }else{
+    title.textContent = 'Digite sua senha';
+    desc.textContent = 'Digite a senha para acessar o FinUp.';
+    confirmField.classList.add('hidden');
+    submit.textContent = 'Desbloquear';
+    switchBtn.textContent = 'Ainda não configurei uma senha';
+  }
   document.getElementById('lockScreen').classList.remove('hidden');
 }
 
@@ -641,25 +652,39 @@ function hideLock(){
   markUnlocked();
 }
 
+document.getElementById('lockSwitchMode').addEventListener('click', ()=>{
+  showLock(lockMode === 'unlock' ? 'create' : 'unlock');
+});
+
 document.getElementById('lockSubmit').addEventListener('click', async ()=>{
   const pass = document.getElementById('lockPassword').value;
-  if(!pass){ showToast('Digite sua senha'); return; }
+  if(!pass || pass.length < 6){ showToast('A senha precisa ter pelo menos 6 caracteres'); return; }
 
-  const hadUidBefore = !!currentUid;
-  try{
-    const cred = await signInWithEmailAndPassword(fbAuth, APP_EMAIL, pass);
-    currentUid = cred.user.uid;
-    if(!hadUidBefore){
-      await loadState();
-      state.currentMonth = monthKey(new Date());
-      renderMonth();
-      renderRecurring();
-      setView('month');
+  if(lockMode === 'unlock'){
+    try{
+      await signInWithEmailAndPassword(fbAuth, APP_EMAIL, pass);
+      hideLock();
+    }catch(e){
+      if(e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential'){ showToast('Senha incorreta', true); }
+      else if(e.code === 'auth/user-not-found'){ showToast('Nenhuma senha configurada ainda — toque em "Ainda não configurei uma senha" abaixo', true); }
+      else{ showToast('Erro ao desbloquear: ' + e.message, true); }
     }
-    hideLock();
-  }catch(e){
-    if(e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential'){ showToast('Senha incorreta', true); }
-    else{ showToast('Erro ao desbloquear: ' + e.message, true); }
+  }else{
+    const confirmPass = document.getElementById('lockPasswordConfirm').value;
+    if(pass !== confirmPass){ showToast('As senhas não coincidem'); return; }
+    if(!fbAuth.currentUser || !fbAuth.currentUser.isAnonymous){ showToast('Esta conta já tem uma senha configurada'); return; }
+    try{
+      const cred = EmailAuthProvider.credential(APP_EMAIL, pass);
+      await linkWithCredential(fbAuth.currentUser, cred);
+      hideLock();
+      showToast('Senha criada com sucesso');
+    }catch(e){
+      if(e.code === 'auth/email-already-in-use' || e.code === 'auth/credential-already-in-use'){
+        showToast('Já existe uma senha criada — toque em "Já tenho uma senha, entrar"', true);
+      }else{
+        showToast('Erro ao criar senha: ' + e.message, true);
+      }
+    }
   }
 });
 
@@ -925,14 +950,13 @@ function renderMonth(){
     return;
   }
 
-  // A conta em destaque é a próxima pendente (não atrasada, não paga) a vencer.
+  // Cards em destaque: TODAS as contas (não pagas) que vencem hoje — pode ser mais de uma.
   const todayStr = (()=>{ const t=todayISO(); return `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`; })();
-  const highlightIdx = sorted.findIndex(b => !b.paid && b.due === todayStr);
-  const highlightBill = highlightIdx > -1 ? sorted[highlightIdx] : null;
-  const rest = highlightBill ? sorted.filter((b, i) => i !== highlightIdx) : sorted;
+  const highlightBills = sorted.filter(b => !b.paid && b.due === todayStr);
+  const highlightIds = new Set(highlightBills.map(b=>b.id));
+  const rest = highlightBills.length ? sorted.filter(b => !highlightIds.has(b.id)) : sorted;
 
-  if(highlightBill){
-    const bill = highlightBill;
+  highlightBills.forEach(bill => {
     const card = document.createElement('div');
     card.className = 'bill-highlight';
     card.innerHTML = `
@@ -947,13 +971,16 @@ function renderMonth(){
           <div class="bill-highlight-value">${bill.value ? formatCentsToBRL(bill.value) : '—'}</div>
         </div>
       </div>
-      <button class="bill-highlight-pay" data-pay="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}">
-        Pagar agora
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-      </button>
+      <div class="bill-highlight-divider"></div>
+      <div class="bill-highlight-actions">
+        <button class="bill-highlight-pay" data-pay="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}">
+          Pagar agora
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
     `;
     container.appendChild(card);
-  }
+  });
 
   rest.forEach(bill => {
     const status = billStatus(bill);
@@ -1543,14 +1570,12 @@ async function init(){
     setView('month');
   }
 
-  const uidAtStart = await ensureSignedIn();
-  if(uidAtStart){
-    await loadState();
-    state.currentMonth = monthKey(new Date());
-    renderMonth();
-    renderRecurring();
-    setView('month');
-  }
+  await ensureSignedIn();
+  await loadState();
+  state.currentMonth = monthKey(new Date());
+  renderMonth();
+  renderRecurring();
+  setView('month');
 
   if(isIOS() && !isStandaloneMode()){
     showToast('No iPhone, abra pelo ícone salvo na Tela de Início para receber notificações', true);
