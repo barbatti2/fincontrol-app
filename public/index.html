@@ -67,7 +67,7 @@
   .icon-btn:active{ transform:scale(.92); }
   .header-wave{ position:absolute; left:0; right:0; bottom:-1px; width:100%; height:26px; display:block; }
 
-  main{ max-width:560px; margin:0 auto; padding:6px 16px 0; min-height:60vh; }
+  main{ max-width:560px; margin:0 auto; padding:6px 11px 0; min-height:60vh; }
   .page-title{ text-align:center; font-size:21px; font-weight:800; margin:14px 0 12px; letter-spacing:-.3px; }
 
   /* ---------- Header actions / view toggle ---------- */
@@ -88,24 +88,31 @@
 
   /* ---------- Card do mês ---------- */
   .month-card{
-    background:var(--gradient); border-radius:18px; padding:13px 16px 14px; margin:0 8px 16px;
+    background:var(--gradient); border-radius:18px; padding:13px 16px 14px; margin:0 0 16px;
     box-shadow:0 8px 24px rgba(30,63,174,.25);
   }
   .month-card-title{ color:#fff; text-align:center; font-size:15.5px; font-weight:800; margin:0 0 10px; letter-spacing:-.2px; }
-  .month-nav{
-    background:#fff; border-radius:999px; display:flex; align-items:center; justify-content:space-between;
-    padding:7px; box-shadow:0 4px 14px rgba(11,30,91,.12);
-  }
-  .month-nav button{
-    background:none; border:none; color:var(--primary-dark); width:33px; height:33px; border-radius:50%;
+  .month-strip{ display:flex; align-items:center; gap:8px; }
+  .month-strip-arrow{
+    background:#fff; border:none; color:var(--primary-dark); width:30px; height:30px; border-radius:50%;
     display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
+    box-shadow:0 4px 10px rgba(11,30,91,.15);
   }
-  .month-nav button:active{ background:var(--primary-light); }
-  .month-nav .label{
-    flex:1; text-align:center; font-weight:800; font-size:clamp(14.5px, 4.4vw, 16.5px); color:var(--text);
-    position:relative; cursor:pointer; white-space:nowrap; letter-spacing:-.2px;
+  .month-strip-arrow:active{ background:var(--primary-light); }
+  .month-strip-track{
+    flex:1; background:#fff; border-radius:14px; display:flex; align-items:stretch;
+    padding:4px; box-shadow:0 4px 14px rgba(11,30,91,.12); overflow:hidden; position:relative;
   }
-  .month-nav input[type="month"]{ position:absolute; inset:0; opacity:0; cursor:pointer; }
+  .month-chip{
+    flex:1; background:none; border:none; border-radius:10px; padding:5px 2px; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0;
+    font-size:11.5px; font-weight:700; color:var(--muted); line-height:1.25; white-space:nowrap;
+    position:relative;
+  }
+  .month-chip.active{
+    background:var(--gradient); color:#fff; box-shadow:0 4px 10px rgba(30,63,174,.35);
+  }
+  .month-chip .chip-month-input{ position:absolute; inset:0; opacity:0; cursor:pointer; }
 
   /* ---------- Summary card ---------- */
   .summary-card{
@@ -355,16 +362,13 @@
   <section id="viewMonth">
     <div class="month-card">
       <h1 class="month-card-title">Contas do mês</h1>
-      <div class="month-nav">
-        <button id="prevMonth" aria-label="Mês anterior">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <div class="month-strip">
+        <button id="prevMonth" class="month-strip-arrow" aria-label="Mês anterior">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
-        <div class="label" id="monthLabelWrap">
-          <span id="monthLabel">Julho - 2026</span>
-          <input type="month" id="monthPicker">
-        </div>
-        <button id="nextMonth" aria-label="Próximo mês">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        <div class="month-strip-track" id="monthStripTrack"></div>
+        <button id="nextMonth" class="month-strip-arrow" aria-label="Próximo mês">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
       </div>
     </div>
@@ -526,16 +530,12 @@
     <div class="lock-icon">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
     </div>
-    <h2 id="lockTitle">Digite sua senha</h2>
-    <p id="lockDesc" class="auth-desc">Digite a senha para acessar o FinUp.</p>
+    <h2>Digite sua senha</h2>
+    <p class="auth-desc">Digite a senha para acessar o FinUp.</p>
     <div class="field">
       <input type="password" id="lockPassword" placeholder="Senha" autocomplete="current-password">
     </div>
-    <div class="field hidden" id="lockConfirmField">
-      <input type="password" id="lockPasswordConfirm" placeholder="Confirmar senha" autocomplete="new-password">
-    </div>
     <button class="btn-primary" id="lockSubmit">Desbloquear</button>
-    <button class="btn-cancel" id="lockSwitchMode">Ainda não configurei uma senha</button>
   </div>
 </div>
 
@@ -543,7 +543,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged, signInWithEmailAndPassword, EmailAuthProvider, linkWithCredential } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import { getAuth, signInAnonymously, onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, getDocFromCache, setDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging.js";
 
@@ -596,7 +596,7 @@ function ensureSignedIn(){
           if(aindaDentroDaJanela){
             markUnlocked(); // renova a janela de 24h a partir de agora
           }else{
-            showLock(user.isAnonymous ? 'create' : 'unlock');
+            showLock();
           }
           resolve(user.uid);
         }
@@ -613,42 +613,17 @@ function ensureSignedIn(){
 /* ==========================================================================
    TELA DE BLOQUEIO (senha, sem e-mail visível pro usuário)
    -------------------------------------------------------------------------
-   - "unlock": pede a senha já configurada. Se der certo, troca (se preciso)
-     pra conta permanente correta e libera a tela.
-   - "create": primeira vez configurando — vira a sessão atual (anônima)
-     numa conta permanente com essa senha, SEM perder os dados de hoje
-     (linkWithCredential mantém o mesmo UID).
+   Só pede a senha já configurada (criada direto no Firebase, fora do app).
    Fica desbloqueado por 24h (LOCK_DURATION_MS) — só pede a senha de novo
    depois que esse tempo passar.
    ========================================================================== */
-let lockMode = 'unlock';
 
 function markUnlocked(){
   localStorage.setItem('fincontrol_last_unlock', String(Date.now()));
 }
 
-function showLock(mode){
-  lockMode = mode;
+function showLock(){
   document.getElementById('lockPassword').value = '';
-  document.getElementById('lockPasswordConfirm').value = '';
-  const title = document.getElementById('lockTitle');
-  const desc = document.getElementById('lockDesc');
-  const confirmField = document.getElementById('lockConfirmField');
-  const submit = document.getElementById('lockSubmit');
-  const switchBtn = document.getElementById('lockSwitchMode');
-  if(mode === 'create'){
-    title.textContent = 'Crie uma senha';
-    desc.textContent = 'Essa senha protege seus dados: mesmo reinstalando o app, você acessa as mesmas contas sem perder nada.';
-    confirmField.classList.remove('hidden');
-    submit.textContent = 'Criar senha e continuar';
-    switchBtn.textContent = 'Já tenho uma senha, entrar';
-  }else{
-    title.textContent = 'Digite sua senha';
-    desc.textContent = 'Digite a senha para acessar o FinUp.';
-    confirmField.classList.add('hidden');
-    submit.textContent = 'Desbloquear';
-    switchBtn.textContent = 'Ainda não configurei uma senha';
-  }
   document.getElementById('lockScreen').classList.remove('hidden');
 }
 
@@ -657,39 +632,16 @@ function hideLock(){
   markUnlocked();
 }
 
-document.getElementById('lockSwitchMode').addEventListener('click', ()=>{
-  showLock(lockMode === 'unlock' ? 'create' : 'unlock');
-});
-
 document.getElementById('lockSubmit').addEventListener('click', async ()=>{
   const pass = document.getElementById('lockPassword').value;
   if(!pass || pass.length < 6){ showToast('A senha precisa ter pelo menos 6 caracteres'); return; }
-
-  if(lockMode === 'unlock'){
-    try{
-      await signInWithEmailAndPassword(fbAuth, APP_EMAIL, pass);
-      hideLock();
-    }catch(e){
-      if(e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential'){ showToast('Senha incorreta', true); }
-      else if(e.code === 'auth/user-not-found'){ showToast('Nenhuma senha configurada ainda — toque em "Ainda não configurei uma senha" abaixo', true); }
-      else{ showToast('Erro ao desbloquear: ' + e.message, true); }
-    }
-  }else{
-    const confirmPass = document.getElementById('lockPasswordConfirm').value;
-    if(pass !== confirmPass){ showToast('As senhas não coincidem'); return; }
-    if(!fbAuth.currentUser || !fbAuth.currentUser.isAnonymous){ showToast('Esta conta já tem uma senha configurada'); return; }
-    try{
-      const cred = EmailAuthProvider.credential(APP_EMAIL, pass);
-      await linkWithCredential(fbAuth.currentUser, cred);
-      hideLock();
-      showToast('Senha criada com sucesso');
-    }catch(e){
-      if(e.code === 'auth/email-already-in-use' || e.code === 'auth/credential-already-in-use'){
-        showToast('Já existe uma senha criada — toque em "Já tenho uma senha, entrar"', true);
-      }else{
-        showToast('Erro ao criar senha: ' + e.message, true);
-      }
-    }
+  try{
+    await signInWithEmailAndPassword(fbAuth, APP_EMAIL, pass);
+    hideLock();
+  }catch(e){
+    if(e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential'){ showToast('Senha incorreta', true); }
+    else if(e.code === 'auth/user-not-found'){ showToast('Nenhuma senha configurada ainda para esta conta', true); }
+    else{ showToast('Erro ao desbloquear: ' + e.message, true); }
   }
 });
 
@@ -934,10 +886,34 @@ function escapeHtml(str){
    RENDER — CONTAS DO MÊS
    ========================================================================== */
 const SWIPE_ACTIONS_WIDTH = 132;
+const MESES_ABREV = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+function renderMonthStrip(){
+  const track = document.getElementById('monthStripTrack');
+  track.innerHTML = '';
+  for(let offset = -2; offset <= 2; offset++){
+    const mk = offset === 0 ? state.currentMonth : addMonths(state.currentMonth, offset);
+    const [y, m] = mk.split('-').map(Number);
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'month-chip' + (offset === 0 ? ' active' : '');
+    chip.dataset.month = mk;
+    chip.innerHTML = `<span>${MESES_ABREV[m-1]}</span><span>${y}</span>`;
+    if(offset === 0){
+      const input = document.createElement('input');
+      input.type = 'month';
+      input.className = 'chip-month-input';
+      input.value = mk;
+      input.addEventListener('click', ()=>{ if(input.showPicker){ try{ input.showPicker(); }catch(e){} } });
+      input.addEventListener('change', (e)=> goToMonth(e.target.value));
+      chip.appendChild(input);
+    }
+    track.appendChild(chip);
+  }
+}
 
 function renderMonth(){
-  document.getElementById('monthLabel').textContent = formatMonthLabel(state.currentMonth);
-  document.getElementById('monthPicker').value = state.currentMonth;
+  renderMonthStrip();
 
   const list = getMonthBills(state.currentMonth);
   const sorted = [...list].sort((a,b)=> a.due.localeCompare(b.due));
@@ -1192,10 +1168,11 @@ function goToMonth(key){
 }
 document.getElementById('prevMonth').addEventListener('click', ()=> goToMonth(addMonths(state.currentMonth,-1)));
 document.getElementById('nextMonth').addEventListener('click', ()=> goToMonth(addMonths(state.currentMonth,1)));
-document.getElementById('monthPicker').addEventListener('change', (e)=> goToMonth(e.target.value));
-document.getElementById('monthLabelWrap').addEventListener('click', ()=>{
-  const picker = document.getElementById('monthPicker');
-  if(picker.showPicker){ try{ picker.showPicker(); }catch(e){} }
+
+document.getElementById('monthStripTrack').addEventListener('click', (e)=>{
+  const chip = e.target.closest('.month-chip');
+  if(!chip || chip.classList.contains('active')) return;
+  goToMonth(chip.dataset.month);
 });
 
 /* ==========================================================================
