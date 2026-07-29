@@ -242,7 +242,7 @@
     -webkit-user-select:none; border-radius:var(--radius);
   }
   .bill-swipe-card.swiped-open{ border-top-right-radius:0; border-bottom-right-radius:0; }
-  .empty-state .icon{ font-size:34px; margin-bottom:10px; }
+  .empty-state .icon{ display:flex; align-items:center; justify-content:center; margin-bottom:10px; }
 
   /* ---------- Recurring view ---------- */
   .rec-header{ padding:6px 0 6px; text-align:center; display:flex; flex-direction:column; align-items:center; }
@@ -523,7 +523,9 @@
 <!-- Tela de bloqueio: aparece sempre que o app abre, com o fundo borrado -->
 <div class="lock-screen hidden" id="lockScreen">
   <div class="lock-card">
-    <div class="lock-icon">🔒</div>
+    <div class="lock-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+    </div>
     <h2 id="lockTitle">Digite sua senha</h2>
     <p id="lockDesc" class="auth-desc">Digite a senha para acessar o FinUp.</p>
     <div class="field">
@@ -949,7 +951,7 @@ function renderMonth(){
   container.innerHTML = '';
 
   if(sorted.length === 0){
-    container.innerHTML = `<div class="empty-state"><div class="icon">🗒️</div>Nenhuma conta neste mês.<br>Toque em "Nova conta" para adicionar.</div>`;
+    container.innerHTML = `<div class="empty-state"><div class="icon"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6M9 9h1"/></svg></div>Nenhuma conta neste mês.<br>Toque no botão "+" para adicionar.</div>`;
     return;
   }
 
@@ -1109,7 +1111,7 @@ function renderRecurring(){
   container.innerHTML = '';
 
   if(list.length === 0){
-    container.innerHTML = `<div class="empty-state"><div class="icon">📋</div>Nenhuma conta recorrente cadastrada.</div>`;
+    container.innerHTML = `<div class="empty-state"><div class="icon"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg></div>Nenhuma conta recorrente cadastrada.</div>`;
     return;
   }
 
@@ -1594,7 +1596,7 @@ async function init(){
     }else if(Notification.permission === 'default'){
       // No Safari/iOS, pedir permissão sem um toque do usuário falha
       // silenciosamente. Por isso pedimos aqui só um toque no sino.
-      showToast('Toque no sino 🔔 no topo para ativar as notificações', true);
+      showToast('Toque no sino no topo para ativar as notificações', true);
     }
   }
 }
