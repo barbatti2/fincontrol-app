@@ -72,12 +72,13 @@ async function run() {
         if (bill.paid) return;
         const diffDays = daysBetween(todayStr, bill.due);
         console.log(`  · "${bill.name}" vence em ${bill.due} (paga: ${bill.paid}, diffDays: ${diffDays})`);
-        if ((diffDays === 3 || diffDays === 1)) {
+        if ((diffDays === 2 || diffDays === 0)) {
           if (tokens.length === 0) {
             console.log(`    -> bateria a condição, mas não há token salvo pra esse usuário.`);
             return;
           }
-          const body = `Sua conta "${bill.name}" vence em ${diffDays} dia${diffDays > 1 ? 's' : ''} (${formatBRL(bill.value)})`;
+          const quando = diffDays === 0 ? 'vence hoje' : `vence em ${diffDays} dias`;
+          const body = `Sua conta "${bill.name}" ${quando} (${formatBRL(bill.value)})`;
           tokens.forEach((token) => {
             sends.push(
               admin.messaging()
