@@ -88,33 +88,33 @@
 
   /* ---------- Card do mês ---------- */
   .month-card{
-    background:var(--gradient); border-radius:18px; padding:14px 12px 14px; margin:0 0 16px;
+    background:var(--gradient); border-radius:18px; padding:12px 12px 12px; margin:0 0 16px;
     box-shadow:0 8px 24px rgba(30,63,174,.25);
   }
-  .month-card-title{ color:#fff; text-align:center; font-size:15.5px; font-weight:800; margin:0 0 4px; letter-spacing:-.2px; }
+  .month-card-title{ color:#fff; text-align:center; font-size:15.5px; font-weight:800; margin:0 0 2px; letter-spacing:-.2px; }
   .month-strip{ display:flex; align-items:center; gap:6px; }
   .month-strip-arrow{
     background:rgba(255,255,255,.16); border:1.5px solid rgba(255,255,255,.55); color:#fff;
-    width:32px; height:32px; border-radius:50%;
+    width:30px; height:30px; border-radius:50%;
     display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
   }
   .month-strip-arrow:active{ background:rgba(255,255,255,.3); }
-  .month-timeline-track{ flex:1; position:relative; height:76px; }
+  .month-timeline-track{ flex:1; position:relative; height:66px; }
   .month-timeline-line{
     position:absolute; left:4px; right:4px; top:50%; height:1px;
     background:rgba(255,255,255,.35); transform:translateY(-50%);
   }
   .month-points{ position:absolute; inset:0; display:flex; align-items:center; justify-content:space-between; }
   .month-point{ position:relative; display:flex; align-items:center; justify-content:center; background:none; border:none; padding:0; cursor:pointer; }
-  .month-point-dot{ width:9px; height:9px; border-radius:50%; background:rgba(255,255,255,.85); }
+  .month-point-dot{ width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.85); }
   .month-point-label{
-    position:absolute; bottom:100%; margin-bottom:7px; text-align:center; white-space:nowrap;
-    font-size:11px; font-weight:700; color:rgba(255,255,255,.8); line-height:1.25;
+    position:absolute; bottom:100%; margin-bottom:6px; text-align:center; white-space:nowrap;
+    font-size:10.5px; font-weight:700; color:rgba(255,255,255,.8); line-height:1.2;
   }
   .month-point.active .month-point-circle{
-    width:60px; height:60px; border-radius:50%; border:2.5px solid #fff; background:rgba(255,255,255,.14);
+    width:52px; height:52px; border-radius:50%; border:2.5px solid #fff; background:var(--primary-dark);
     display:flex; align-items:center; justify-content:center; flex-direction:column;
-    color:#fff; font-weight:800; font-size:13px; line-height:1.25;
+    color:#fff; font-weight:800; font-size:12px; line-height:1.2; position:relative; z-index:1;
   }
   .month-point .chip-month-input{ position:absolute; inset:0; opacity:0; cursor:pointer; }
 
