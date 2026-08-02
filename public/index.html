@@ -485,7 +485,7 @@
       </label>
     </div>
     <div class="field hidden" id="billInstallmentField">
-      <label>Quantidade de parcelas</label>
+      <label id="billInstallmentFieldLabel">Quantidade de parcelas</label>
       <input type="text" id="billInstallmentCount" inputmode="numeric" placeholder="Ex: 20">
     </div>
     <button class="btn-primary" id="billSubmit">Adicionar</button>
@@ -739,6 +739,7 @@ function seedData(){
     recurringOverrides: {},
     installments: [],
     installmentStatus: {},
+    installmentOverrides: {},
     fcmTokens: []
   };
 }
@@ -754,6 +755,7 @@ function applyStateFromData(data){
     recurringOverrides: data.recurringOverrides || {},
     installments: data.installments || [],
     installmentStatus: data.installmentStatus || {},
+    installmentOverrides: data.installmentOverrides || {},
     fcmTokens: data.fcmTokens || []
   };
   saveLocalCache();
@@ -844,6 +846,7 @@ async function saveState(){
       recurringOverrides: state.recurringOverrides,
       installments: state.installments || [],
       installmentStatus: state.installmentStatus || {},
+      installmentOverrides: state.installmentOverrides || {},
       fcmTokens: state.fcmTokens || []
     });
   }catch(e){
@@ -878,10 +881,13 @@ function getMonthBills(monthKey){
       const idx = monthsDiff(p.startMonth, monthKey);
       if(idx < 0 || idx >= p.totalInstallments) return null;
       const day = pad2(Math.min(p.day, 28));
+      const override = (state.installmentOverrides[p.id] && state.installmentOverrides[p.id][monthKey]) || null;
       const paid = !!(state.installmentStatus[p.id] && state.installmentStatus[p.id][monthKey]);
+      const value = override && override.value !== undefined ? override.value : p.value;
+      const note = override && override.note !== undefined ? override.note : (p.note || '');
       return {
         id: `inst_${p.id}_${monthKey}`, templateId: p.id, name: `${p.name} (${idx+1}/${p.totalInstallments})`,
-        value: p.value, due: `${monthKey}-${day}`, note: p.note || '', paid, origin:'installment',
+        value, due: `${monthKey}-${day}`, note, paid, origin:'installment', hasOverride: !!override,
         installmentIndex: idx, totalInstallments: p.totalInstallments
       };
     })
@@ -1362,7 +1368,8 @@ const billInstallmentCountEl = document.getElementById('billInstallmentCount');
 attachCurrencyMask(billValueEl);
 let editingBillId = null;
 let editingOverride = null; // { templateId, monthKey } quando estamos ajustando só o mês atual
-let editingInstallmentId = null; // id da série de parcelas, quando estamos editando o parcelamento inteiro
+let editingInstallmentId = null; // vestigial, não usado mais (edição virou por mês)
+let editingInstallmentOverride = null; // { templateId, monthKey } quando estamos ajustando só uma parcela
 
 billInstallmentToggle.addEventListener('change', ()=>{
   billInstallmentField.classList.toggle('hidden', !billInstallmentToggle.checked);
@@ -1372,6 +1379,7 @@ function openEditRecurringOverride(bill){
   editingBillId = null;
   editingOverride = null;
   editingInstallmentId = null;
+  editingInstallmentOverride = null;
   editingOverride = { templateId: bill.templateId, monthKey: state.currentMonth };
   document.getElementById('modalBillTitle').textContent = 'Ajustar valor deste mês';
   document.getElementById('billSubmit').textContent = 'Salvar';
@@ -1389,6 +1397,7 @@ document.getElementById('btnNewBill').addEventListener('click', ()=>{
   editingBillId = null;
   editingOverride = null;
   editingInstallmentId = null;
+  editingInstallmentOverride = null;
   document.getElementById('modalBillTitle').textContent = 'Nova conta';
   document.getElementById('billSubmit').textContent = 'Adicionar';
   billNameEl.value = ''; billNameEl.disabled = false;
@@ -1401,6 +1410,7 @@ document.getElementById('btnNewBill').addEventListener('click', ()=>{
   billInstallmentToggle.checked = false;
   billInstallmentField.classList.add('hidden');
   billInstallmentCountEl.value = '';
+  document.getElementById('billInstallmentFieldLabel').textContent = 'Quantidade de parcelas';
   openModal('modalBill');
 });
 
@@ -1410,6 +1420,7 @@ function openEditBill(id){
   editingBillId = id;
   editingOverride = null;
   editingInstallmentId = null;
+  editingInstallmentOverride = null;
   document.getElementById('modalBillTitle').textContent = 'Editar conta';
   document.getElementById('billSubmit').textContent = 'Salvar';
   billNameEl.value = bill.name; billNameEl.disabled = false;
@@ -1422,21 +1433,23 @@ function openEditBill(id){
   openModal('modalBill');
 }
 
-function openEditInstallment(templateId){
-  const inst = (state.installments || []).find(p => p.id === templateId);
-  if(!inst) return;
+function openEditInstallmentOverride(bill){
   editingBillId = null;
   editingOverride = null;
-  editingInstallmentId = templateId;
-  document.getElementById('modalBillTitle').textContent = 'Editar parcelamento';
+  editingInstallmentId = null;
+  editingInstallmentOverride = { templateId: bill.templateId, monthKey: state.currentMonth };
+  document.getElementById('modalBillTitle').textContent = 'Editar esta parcela';
   document.getElementById('billSubmit').textContent = 'Salvar';
-  billNameEl.value = inst.name; billNameEl.disabled = false;
-  setCurrencyValue(billValueEl, inst.value);
-  billDueEl.value = `${inst.startMonth}-${pad2(inst.day)}`; billDueEl.disabled = true;
-  billNoteEl.value = inst.note || '';
+  const baseName = bill.name.replace(/\s*\(\d+\/\d+\)$/, '');
+  billNameEl.value = baseName; billNameEl.disabled = true;
+  setCurrencyValue(billValueEl, bill.value);
+  billDueEl.value = bill.due; billDueEl.disabled = true;
+  billNoteEl.value = bill.note || '';
   billInstallmentRow.classList.add('hidden');
   billInstallmentField.classList.remove('hidden');
-  billInstallmentCountEl.value = inst.totalInstallments;
+  document.getElementById('billInstallmentFieldLabel').textContent =
+    `Total de parcelas (esta é a parcela ${bill.installmentIndex + 1})`;
+  billInstallmentCountEl.value = bill.totalInstallments;
   openModal('modalBill');
 }
 
@@ -1454,23 +1467,23 @@ document.getElementById('billSubmit').addEventListener('click', ()=>{
     return;
   }
 
-  if(editingInstallmentId){
-    const inst = (state.installments || []).find(p => p.id === editingInstallmentId);
+  if(editingInstallmentOverride){
+    const inst = (state.installments || []).find(p => p.id === editingInstallmentOverride.templateId);
     if(inst){
-      const name = billNameEl.value.trim();
-      if(!name){ showToast('Informe um nome para a conta'); return; }
+      const value = getCurrencyCents(billValueEl);
+      const note = billNoteEl.value.trim();
+      if(!state.installmentOverrides[editingInstallmentOverride.templateId]) state.installmentOverrides[editingInstallmentOverride.templateId] = {};
+      state.installmentOverrides[editingInstallmentOverride.templateId][editingInstallmentOverride.monthKey] = { value, note };
+
       const count = parseInt(billInstallmentCountEl.value, 10);
       if(!count || count < 1){ showToast('Informe uma quantidade de parcelas válida'); return; }
-      inst.name = name;
-      inst.value = getCurrencyCents(billValueEl);
-      inst.note = billNoteEl.value.trim();
       inst.totalInstallments = count;
     }
     saveState();
     renderMonth();
     closeModal('modalBill');
-    showToast('Parcelamento atualizado');
-    editingInstallmentId = null;
+    showToast('Parcela atualizada');
+    editingInstallmentOverride = null;
     return;
   }
 
@@ -1731,7 +1744,7 @@ document.getElementById('billActionsEdit').addEventListener('click', ()=>{
   const bill = getMonthBills(state.currentMonth).find(b=>b.id===billActionsTarget.id);
   if(!bill) return;
   if(bill.origin === 'recurring') openEditRecurringOverride(bill);
-  else if(bill.origin === 'installment') openEditInstallment(bill.templateId);
+  else if(bill.origin === 'installment') openEditInstallmentOverride(bill);
   else openEditBill(bill.id);
 });
 
