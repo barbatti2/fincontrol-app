@@ -335,6 +335,11 @@
     font-size:15.5px; color:var(--text); background:#fbfbfd;
   }
   .field textarea{ resize:vertical; min-height:64px; }
+  .field-checkbox{ margin-bottom:14px; }
+  .checkbox-label{
+    display:flex; align-items:center; gap:9px; font-weight:600; font-size:14.5px; color:var(--text); cursor:pointer;
+  }
+  .checkbox-label input[type="checkbox"]{ width:19px; height:19px; accent-color:var(--primary); cursor:pointer; }
   .field input:focus, .field textarea:focus{ outline:2px solid var(--primary); outline-offset:1px; }
   .btn-primary{
     width:100%; background:var(--gradient); color:#fff; border:none; border-radius:14px;
@@ -472,6 +477,16 @@
     <div class="field">
       <label>Observação</label>
       <textarea id="billNote" placeholder="Opcional"></textarea>
+    </div>
+    <div class="field-checkbox" id="billInstallmentRow">
+      <label class="checkbox-label">
+        <input type="checkbox" id="billInstallmentToggle">
+        Parcelar essa conta
+      </label>
+    </div>
+    <div class="field hidden" id="billInstallmentField">
+      <label>Quantidade de parcelas</label>
+      <input type="text" id="billInstallmentCount" inputmode="numeric" placeholder="Ex: 20">
     </div>
     <button class="btn-primary" id="billSubmit">Adicionar</button>
     <button class="btn-cancel" data-close="modalBill">Cancelar</button>
@@ -722,6 +737,8 @@ function seedData(){
       r4: { '2026-07': true }
     },
     recurringOverrides: {},
+    installments: [],
+    installmentStatus: {},
     fcmTokens: []
   };
 }
@@ -735,6 +752,8 @@ function applyStateFromData(data){
     oneOffBills: data.oneOffBills || {},
     recurringStatus: data.recurringStatus || {},
     recurringOverrides: data.recurringOverrides || {},
+    installments: data.installments || [],
+    installmentStatus: data.installmentStatus || {},
     fcmTokens: data.fcmTokens || []
   };
   saveLocalCache();
@@ -823,6 +842,8 @@ async function saveState(){
       oneOffBills: state.oneOffBills,
       recurringStatus: state.recurringStatus,
       recurringOverrides: state.recurringOverrides,
+      installments: state.installments || [],
+      installmentStatus: state.installmentStatus || {},
       fcmTokens: state.fcmTokens || []
     });
   }catch(e){
@@ -852,7 +873,26 @@ function getMonthBills(monthKey){
         due: `${monthKey}-${day}`, note, paid, origin:'recurring', hasOverride: !!override
       };
     });
-  return [...manual, ...recurring];
+  const installments = (state.installments || [])
+    .map(p => {
+      const idx = monthsDiff(p.startMonth, monthKey);
+      if(idx < 0 || idx >= p.totalInstallments) return null;
+      const day = pad2(Math.min(p.day, 28));
+      const paid = !!(state.installmentStatus[p.id] && state.installmentStatus[p.id][monthKey]);
+      return {
+        id: `inst_${p.id}_${monthKey}`, templateId: p.id, name: `${p.name} (${idx+1}/${p.totalInstallments})`,
+        value: p.value, due: `${monthKey}-${day}`, note: p.note || '', paid, origin:'installment',
+        installmentIndex: idx, totalInstallments: p.totalInstallments
+      };
+    })
+    .filter(Boolean);
+  return [...manual, ...recurring, ...installments];
+}
+
+function monthsDiff(mkA, mkB){
+  const [yA, mA] = mkA.split('-').map(Number);
+  const [yB, mB] = mkB.split('-').map(Number);
+  return (yB - yA) * 12 + (mB - mA);
 }
 
 /* ==========================================================================
@@ -1315,12 +1355,23 @@ const billNameEl = document.getElementById('billName');
 const billValueEl = document.getElementById('billValue');
 const billDueEl = document.getElementById('billDue');
 const billNoteEl = document.getElementById('billNote');
+const billInstallmentRow = document.getElementById('billInstallmentRow');
+const billInstallmentField = document.getElementById('billInstallmentField');
+const billInstallmentToggle = document.getElementById('billInstallmentToggle');
+const billInstallmentCountEl = document.getElementById('billInstallmentCount');
 attachCurrencyMask(billValueEl);
 let editingBillId = null;
 let editingOverride = null; // { templateId, monthKey } quando estamos ajustando só o mês atual
+let editingInstallmentId = null; // id da série de parcelas, quando estamos editando o parcelamento inteiro
+
+billInstallmentToggle.addEventListener('change', ()=>{
+  billInstallmentField.classList.toggle('hidden', !billInstallmentToggle.checked);
+});
 
 function openEditRecurringOverride(bill){
   editingBillId = null;
+  editingOverride = null;
+  editingInstallmentId = null;
   editingOverride = { templateId: bill.templateId, monthKey: state.currentMonth };
   document.getElementById('modalBillTitle').textContent = 'Ajustar valor deste mês';
   document.getElementById('billSubmit').textContent = 'Salvar';
@@ -1328,12 +1379,16 @@ function openEditRecurringOverride(bill){
   setCurrencyValue(billValueEl, bill.value);
   billDueEl.value = bill.due; billDueEl.disabled = true;
   billNoteEl.value = bill.note || '';
+  billInstallmentRow.classList.add('hidden');
+  billInstallmentField.classList.add('hidden');
+  billInstallmentToggle.checked = false;
   openModal('modalBill');
 }
 
 document.getElementById('btnNewBill').addEventListener('click', ()=>{
   editingBillId = null;
   editingOverride = null;
+  editingInstallmentId = null;
   document.getElementById('modalBillTitle').textContent = 'Nova conta';
   document.getElementById('billSubmit').textContent = 'Adicionar';
   billNameEl.value = ''; billNameEl.disabled = false;
@@ -1342,6 +1397,10 @@ document.getElementById('btnNewBill').addEventListener('click', ()=>{
   billDueEl.value = `${today.getFullYear()}-${pad2(today.getMonth()+1)}-${pad2(today.getDate())}`;
   billDueEl.disabled = false;
   billNoteEl.value = '';
+  billInstallmentRow.classList.remove('hidden');
+  billInstallmentToggle.checked = false;
+  billInstallmentField.classList.add('hidden');
+  billInstallmentCountEl.value = '';
   openModal('modalBill');
 });
 
@@ -1350,12 +1409,34 @@ function openEditBill(id){
   if(!bill) return;
   editingBillId = id;
   editingOverride = null;
+  editingInstallmentId = null;
   document.getElementById('modalBillTitle').textContent = 'Editar conta';
   document.getElementById('billSubmit').textContent = 'Salvar';
   billNameEl.value = bill.name; billNameEl.disabled = false;
   setCurrencyValue(billValueEl, bill.value);
   billDueEl.value = bill.due; billDueEl.disabled = false;
   billNoteEl.value = bill.note || '';
+  billInstallmentRow.classList.add('hidden');
+  billInstallmentField.classList.add('hidden');
+  billInstallmentToggle.checked = false;
+  openModal('modalBill');
+}
+
+function openEditInstallment(templateId){
+  const inst = (state.installments || []).find(p => p.id === templateId);
+  if(!inst) return;
+  editingBillId = null;
+  editingOverride = null;
+  editingInstallmentId = templateId;
+  document.getElementById('modalBillTitle').textContent = 'Editar parcelamento';
+  document.getElementById('billSubmit').textContent = 'Salvar';
+  billNameEl.value = inst.name; billNameEl.disabled = false;
+  setCurrencyValue(billValueEl, inst.value);
+  billDueEl.value = `${inst.startMonth}-${pad2(inst.day)}`; billDueEl.disabled = true;
+  billNoteEl.value = inst.note || '';
+  billInstallmentRow.classList.add('hidden');
+  billInstallmentField.classList.remove('hidden');
+  billInstallmentCountEl.value = inst.totalInstallments;
   openModal('modalBill');
 }
 
@@ -1373,11 +1454,47 @@ document.getElementById('billSubmit').addEventListener('click', ()=>{
     return;
   }
 
+  if(editingInstallmentId){
+    const inst = (state.installments || []).find(p => p.id === editingInstallmentId);
+    if(inst){
+      const name = billNameEl.value.trim();
+      if(!name){ showToast('Informe um nome para a conta'); return; }
+      const count = parseInt(billInstallmentCountEl.value, 10);
+      if(!count || count < 1){ showToast('Informe uma quantidade de parcelas válida'); return; }
+      inst.name = name;
+      inst.value = getCurrencyCents(billValueEl);
+      inst.note = billNoteEl.value.trim();
+      inst.totalInstallments = count;
+    }
+    saveState();
+    renderMonth();
+    closeModal('modalBill');
+    showToast('Parcelamento atualizado');
+    editingInstallmentId = null;
+    return;
+  }
+
   const name = billNameEl.value.trim();
   if(!name){ showToast('Informe um nome para a conta'); return; }
   if(!billDueEl.value){ showToast('Informe a data de vencimento'); return; }
   const value = getCurrencyCents(billValueEl);
   const due = billDueEl.value;
+
+  if(!editingBillId && billInstallmentToggle.checked){
+    const count = parseInt(billInstallmentCountEl.value, 10);
+    if(!count || count < 2){ showToast('Informe uma quantidade de parcelas válida (mínimo 2)'); return; }
+    if(!state.installments) state.installments = [];
+    state.installments.push({
+      id: uid(), name, value, day: parseInt(due.slice(8,10),10),
+      note: billNoteEl.value.trim(), startMonth: due.slice(0,7), totalInstallments: count
+    });
+    saveState();
+    renderMonth();
+    closeModal('modalBill');
+    showToast('Conta parcelada criada');
+    return;
+  }
+
   const dueMonth = due.slice(0,7);
   if(!state.oneOffBills[dueMonth]) state.oneOffBills[dueMonth] = [];
 
@@ -1476,6 +1593,9 @@ document.getElementById('payConfirm').addEventListener('click', ()=>{
   if(payingBill.origin === 'manual'){
     const bill = (state.oneOffBills[state.currentMonth]||[]).find(b=>b.id===payingBill.id);
     if(bill) bill.paid = true;
+  }else if(payingBill.origin === 'installment'){
+    if(!state.installmentStatus[payingBill.templateId]) state.installmentStatus[payingBill.templateId] = {};
+    state.installmentStatus[payingBill.templateId][state.currentMonth] = true;
   }else{
     if(!state.recurringStatus[payingBill.templateId]) state.recurringStatus[payingBill.templateId] = {};
     state.recurringStatus[payingBill.templateId][state.currentMonth] = true;
@@ -1497,6 +1617,10 @@ document.getElementById('undoConfirm').addEventListener('click', ()=>{
   if(undoingBill.origin === 'manual'){
     const bill = (state.oneOffBills[state.currentMonth]||[]).find(b=>b.id===undoingBill.id);
     if(bill) bill.paid = false;
+  }else if(undoingBill.origin === 'installment'){
+    if(state.installmentStatus[undoingBill.templateId]){
+      delete state.installmentStatus[undoingBill.templateId][state.currentMonth];
+    }
   }else{
     if(state.recurringStatus[undoingBill.templateId]){
       delete state.recurringStatus[undoingBill.templateId][state.currentMonth];
@@ -1511,16 +1635,18 @@ document.getElementById('undoConfirm').addEventListener('click', ()=>{
 /* ==========================================================================
    EXCLUIR
    -------------------------------------------------------------------------
-   Excluir uma conta recorrente (seja pela aba Recorrentes, seja pelo ícone
-   numa conta do mês) remove ela de TODOS os meses, porque não existem
-   cópias — é só o cadastro sendo apagado.
+   Excluir uma conta recorrente ou um parcelamento (pelo ícone numa conta do
+   mês) remove ele de TODOS os meses, porque não existem cópias — é só o
+   cadastro sendo apagado.
    ========================================================================== */
-let deleteTarget = null; // { type:'bill'|'rec', id, monthKey? }
+let deleteTarget = null; // { type:'bill'|'rec'|'installment', id, monthKey? }
 function openDeleteModal(type, id, name, monthKeyForBill){
   deleteTarget = { type, id, monthKey: monthKeyForBill };
-  document.getElementById('deleteMessage').innerHTML = type === 'rec'
-    ? `Deseja realmente excluir a conta recorrente "<b>${escapeHtml(name)}</b>"? Ela vai sumir de todos os meses (passados e futuros).`
-    : `Deseja realmente excluir "<b>${escapeHtml(name)}</b>"? Esta ação não pode ser desfeita.`;
+  let msg;
+  if(type === 'rec') msg = `Deseja realmente excluir a conta recorrente "<b>${escapeHtml(name)}</b>"? Ela vai sumir de todos os meses (passados e futuros).`;
+  else if(type === 'installment') msg = `Deseja realmente excluir o parcelamento "<b>${escapeHtml(name)}</b>"? Todas as parcelas restantes (nos próximos meses) serão removidas.`;
+  else msg = `Deseja realmente excluir "<b>${escapeHtml(name)}</b>"? Esta ação não pode ser desfeita.`;
+  document.getElementById('deleteMessage').innerHTML = msg;
   openModal('modalDelete');
 }
 document.getElementById('deleteConfirm').addEventListener('click', ()=>{
@@ -1530,6 +1656,10 @@ document.getElementById('deleteConfirm').addEventListener('click', ()=>{
     const idx = arr.findIndex(b=>b.id===deleteTarget.id);
     if(idx>-1) arr.splice(idx,1);
     if(arr.length === 0) delete state.oneOffBills[deleteTarget.monthKey];
+  }else if(deleteTarget.type === 'installment'){
+    const idx = (state.installments||[]).findIndex(p=>p.id===deleteTarget.id);
+    if(idx>-1) state.installments.splice(idx,1);
+    delete state.installmentStatus[deleteTarget.id];
   }else{
     const idx = state.recurring.findIndex(r=>r.id===deleteTarget.id);
     if(idx>-1) state.recurring.splice(idx,1);
@@ -1601,6 +1731,7 @@ document.getElementById('billActionsEdit').addEventListener('click', ()=>{
   const bill = getMonthBills(state.currentMonth).find(b=>b.id===billActionsTarget.id);
   if(!bill) return;
   if(bill.origin === 'recurring') openEditRecurringOverride(bill);
+  else if(bill.origin === 'installment') openEditInstallment(bill.templateId);
   else openEditBill(bill.id);
 });
 
@@ -1610,7 +1741,8 @@ document.getElementById('billActionsDelete').addEventListener('click', ()=>{
   closeModal('modalBillActions');
   const bill = getMonthBills(state.currentMonth).find(b=>b.id===billActionsTarget.id);
   if(!bill) return;
-  openDeleteModal('bill', bill.id, bill.name, state.currentMonth);
+  if(bill.origin === 'installment') openDeleteModal('installment', bill.templateId, bill.name.replace(/\s*\(\d+\/\d+\)$/,''), state.currentMonth);
+  else openDeleteModal('bill', bill.id, bill.name, state.currentMonth);
 });
 
 document.getElementById('recurringList').addEventListener('click', (e)=>{
