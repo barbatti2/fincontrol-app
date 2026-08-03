@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FinUp">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#1E3FAE">
+<meta name="theme-color" content="#0A0A0C">
 <title>FinUp</title>
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -17,18 +17,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --primary:#3B6EF6;
-    --primary-dark:#1E3FAE;
-    --primary-light:#E8EEFF;
-    --gradient: linear-gradient(135deg, #5B8DFF 0%, #1E3FAE 100%);
-    --bg:#F3F6FF;
+    --primary:#16171B;
+    --primary-dark:#000000;
+    --primary-light:#F0F0F2;
+    --gradient: linear-gradient(135deg, #2E3038 0%, #0A0A0C 100%);
+    --bg:#F5F5F7;
     --card:#ffffff;
     --red:#e5484d;
     --amber:#d99425;
     --green:#1fb977;
-    --text:#10193A;
-    --muted:#8790AC;
-    --border:#E6EBF9;
+    --text:#16171B;
+    --muted:#8A8D93;
+    --border:#EAEAEC;
     --gap:12px;
     --radius:16px;
   }
@@ -56,8 +56,8 @@
   }
   header.topbar .brand{ color:#fff; font-weight:800; font-size:24px; letter-spacing:-.2px; display:flex; align-items:center; gap:5px; }
   .brand-up{
-    display:inline-flex; align-items:center; border:2px solid #8FDBFF; border-radius:6px;
-    padding:0 5px; color:#8FDBFF; line-height:1.15;
+    display:inline-flex; align-items:center; border:2px solid rgba(255,255,255,.65); border-radius:6px;
+    padding:0 5px; color:#fff; line-height:1.15;
   }
   .icon-btn{
     width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
@@ -89,7 +89,7 @@
   /* ---------- Card do mês ---------- */
   .month-card{
     background:var(--gradient); border-radius:18px; padding:12px 12px 12px; margin:0 0 16px;
-    box-shadow:0 8px 24px rgba(30,63,174,.25);
+    box-shadow:0 8px 24px rgba(0,0,0,.14);
   }
   .month-card-title{ color:#fff; text-align:center; font-size:15.5px; font-weight:800; margin:0 0 2px; letter-spacing:-.2px; }
   .month-strip{ display:flex; align-items:center; gap:6px; }
@@ -136,7 +136,7 @@
     position:fixed; right:20px; bottom:calc(22px + env(safe-area-inset-bottom, 0px));
     width:58px; height:58px; border-radius:50%; background:var(--gradient); border:none; color:#fff;
     display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:60;
-    box-shadow:0 8px 22px rgba(30,63,174,.4);
+    box-shadow:0 8px 22px rgba(0,0,0,.28);
   }
   .fab-add:active{ opacity:.88; }
   .fab-add.hidden{ display:none !important; }
@@ -207,10 +207,36 @@
 
   .empty-state{ text-align:center; color:var(--muted); padding:56px 20px; font-size:14.5px; }
 
+  /* ---------- Todas as contas cadastradas (lista minimizada) ---------- */
+  .registry-card{
+    background:#fff; border-radius:var(--radius); box-shadow:0 1px 6px rgba(20,60,55,.05);
+    margin-bottom:18px; overflow:hidden;
+  }
+  .registry-toggle{
+    width:100%; background:none; border:none; padding:14px 16px; display:flex; align-items:center;
+    justify-content:space-between; font-weight:700; font-size:14px; color:var(--text); cursor:pointer;
+  }
+  #registryChevron{ transition:transform .2s ease; color:var(--muted); flex-shrink:0; }
+  .registry-toggle.open #registryChevron{ transform:rotate(180deg); }
+  .registry-list{ padding:0 16px 14px; display:flex; flex-direction:column; gap:10px; }
+  .registry-row{ display:flex; align-items:center; gap:10px; padding-top:10px; border-top:1px solid var(--border); }
+  .registry-row:first-child{ border-top:none; padding-top:0; }
+  .registry-avatar{
+    width:32px; height:32px; border-radius:50%; background:var(--primary-light); color:var(--primary-dark);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .registry-info{ flex:1; min-width:0; }
+  .registry-name{ font-weight:700; font-size:13.5px; }
+  .registry-sub{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .registry-right{ text-align:right; flex-shrink:0; }
+  .registry-value{ font-weight:800; font-size:13.5px; }
+  .registry-tag{ font-size:10.5px; color:var(--muted); margin-top:1px; }
+  .registry-empty{ color:var(--muted); font-size:13px; padding-top:4px; }
+
   /* ---------- Card de destaque (próxima a vencer) ---------- */
   .bill-highlight{
     background:var(--gradient); border-radius:var(--radius); padding:16px 18px; color:#fff;
-    box-shadow:0 10px 26px rgba(30,63,174,.32); margin-bottom:var(--gap);
+    box-shadow:0 10px 26px rgba(0,0,0,.22); margin-bottom:var(--gap);
   }
   .bill-highlight-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
   .bill-highlight-badge{
@@ -232,6 +258,11 @@
     gap:6px; cursor:pointer;
   }
   .bill-highlight-pay:active{ opacity:.88; }
+  .bill-highlight-more{
+    background:rgba(255,255,255,.18); border:none; color:#fff; width:36px; height:36px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
+  }
+  .bill-highlight-more:active{ background:rgba(255,255,255,.3); }
 
   /* ---------- Arrastar pro lado (swipe) ---------- */
   .bill-swipe-wrap{ position:relative; border-radius:var(--radius); }
@@ -265,7 +296,7 @@
   .btn-small{
     background:var(--gradient); color:#fff; border:none; border-radius:13px; padding:14px 20px;
     font-weight:700; font-size:14.5px; display:inline-flex; align-items:center; justify-content:center; gap:8px;
-    cursor:pointer; width:100%; max-width:340px; margin:0 auto 22px; box-shadow:0 4px 14px rgba(59,110,246,.35);
+    cursor:pointer; width:100%; max-width:340px; margin:0 auto 22px; box-shadow:0 4px 14px rgba(0,0,0,.25);
   }
   .stats-row{ display:grid; grid-template-columns:1fr 1fr; gap:var(--gap); margin-bottom:20px; }
   .stat-card{ border:1px solid var(--border); border-radius:var(--radius); padding:16px 14px; background:#fff; text-align:center; }
@@ -418,6 +449,14 @@
       <div class="divider"></div>
       <div class="col"><div class="lab paid">Pagas</div><div class="val" id="totalPaid">R$ 0,00</div></div>
       <svg class="summary-wave" viewBox="0 0 500 40" preserveAspectRatio="none"><path d="M0,25 C150,0 350,45 500,15 L500,40 L0,40 Z" fill="var(--primary)"/></svg>
+    </div>
+
+    <div class="registry-card">
+      <button class="registry-toggle" id="registryToggle">
+        <span>Todas as contas cadastradas</span>
+        <svg id="registryChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="registry-list hidden" id="registryList"></div>
     </div>
 
     <div class="section-title">Próximas contas</div>
@@ -999,8 +1038,65 @@ function renderMonthStrip(){
   }
 }
 
+/**
+ * Lista compacta com TODAS as contas cadastradas (recorrentes e parceladas)
+ * — diferente da lista do mês, que só mostra as ocorrências. Pras
+ * parceladas, mostra o valor TOTAL (parcela x quantidade), não só a parcela.
+ */
+function renderRegistryList(){
+  const container = document.getElementById('registryList');
+  container.innerHTML = '';
+
+  const recurringRows = state.recurring.map(rec => `
+    <div class="registry-row">
+      <div class="registry-avatar">${billIcon(rec.name)}</div>
+      <div class="registry-info">
+        <div class="registry-name">${escapeHtml(rec.name)}</div>
+        <div class="registry-sub">Recorrente · vence dia ${rec.day}</div>
+      </div>
+      <div class="registry-right">
+        <div class="registry-value">${formatCentsToBRL(rec.value)}</div>
+        <div class="registry-tag">por mês</div>
+      </div>
+    </div>
+  `);
+
+  const realCurrentMonth = monthKey(new Date());
+  const installmentRows = (state.installments || []).map(inst => {
+    const idx = Math.max(0, Math.min(inst.totalInstallments - 1, monthsDiff(inst.startMonth, realCurrentMonth)));
+    const total = inst.value * inst.totalInstallments;
+    return `
+      <div class="registry-row">
+        <div class="registry-avatar">${billIcon(inst.name)}</div>
+        <div class="registry-info">
+          <div class="registry-name">${escapeHtml(inst.name)}</div>
+          <div class="registry-sub">Parcelado · ${idx+1}/${inst.totalInstallments} · ${formatCentsToBRL(inst.value)} por mês</div>
+        </div>
+        <div class="registry-right">
+          <div class="registry-value">${formatCentsToBRL(total)}</div>
+          <div class="registry-tag">total</div>
+        </div>
+      </div>
+    `;
+  });
+
+  const rows = [...recurringRows, ...installmentRows];
+  container.innerHTML = rows.length
+    ? rows.join('')
+    : `<div class="registry-empty">Nenhuma conta recorrente ou parcelada cadastrada ainda.</div>`;
+}
+
+document.getElementById('registryToggle').addEventListener('click', ()=>{
+  const btn = document.getElementById('registryToggle');
+  const list = document.getElementById('registryList');
+  const isOpen = !list.classList.contains('hidden');
+  list.classList.toggle('hidden', isOpen);
+  btn.classList.toggle('open', !isOpen);
+});
+
 function renderMonth(){
   renderMonthStrip();
+  renderRegistryList();
 
   const list = getMonthBills(state.currentMonth);
   const sorted = [...list].sort((a,b)=> a.due.localeCompare(b.due));
@@ -1038,6 +1134,9 @@ function renderMonth(){
           <div class="bill-highlight-name">${escapeHtml(bill.name)}</div>
           <div class="bill-highlight-due">Vence em ${formatDateBR(bill.due)}</div>
         </div>
+        <button class="bill-highlight-more" data-more="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}" data-paid="0" aria-label="Mais opções">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>
+        </button>
         <button class="bill-highlight-pay" data-pay="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}">
           Pagar agora
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
