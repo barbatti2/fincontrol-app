@@ -236,7 +236,7 @@
   /* ---------- Card de destaque (próxima a vencer) ---------- */
   .bill-highlight{
     background:var(--gradient); border-radius:var(--radius); padding:16px 18px; color:#fff;
-    box-shadow:0 10px 26px rgba(0,0,0,.22); margin-bottom:var(--gap);
+    box-shadow:0 10px 26px rgba(0,0,0,.22); margin-bottom:var(--gap); cursor:pointer;
   }
   .bill-highlight-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
   .bill-highlight-badge{
@@ -258,11 +258,6 @@
     gap:6px; cursor:pointer;
   }
   .bill-highlight-pay:active{ opacity:.88; }
-  .bill-highlight-more{
-    background:rgba(255,255,255,.18); border:none; color:#fff; width:36px; height:36px; border-radius:50%;
-    display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
-  }
-  .bill-highlight-more:active{ background:rgba(255,255,255,.3); }
 
   /* ---------- Arrastar pro lado (swipe) ---------- */
   .bill-swipe-wrap{ position:relative; border-radius:var(--radius); }
@@ -451,14 +446,6 @@
       <svg class="summary-wave" viewBox="0 0 500 40" preserveAspectRatio="none"><path d="M0,25 C150,0 350,45 500,15 L500,40 L0,40 Z" fill="var(--primary)"/></svg>
     </div>
 
-    <div class="registry-card">
-      <button class="registry-toggle" id="registryToggle">
-        <span>Todas as contas cadastradas</span>
-        <svg id="registryChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-      </button>
-      <div class="registry-list hidden" id="registryList"></div>
-    </div>
-
     <div class="section-title">Próximas contas</div>
     <div id="billsList"></div>
   </section>
@@ -478,6 +465,13 @@
     <div class="stats-row">
       <div class="stat-card"><div class="lab">Contas cadastradas</div><div class="val" id="recCount">0</div></div>
       <div class="stat-card"><div class="lab">Total estimado</div><div class="val" id="recTotal">R$ 0,00</div></div>
+    </div>
+    <div class="registry-card">
+      <button class="registry-toggle" id="registryToggle">
+        <span>Todas as contas cadastradas</span>
+        <svg id="registryChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="registry-list hidden" id="registryList"></div>
     </div>
     <div class="section-title" id="analysisTitle" style="display:none;">Análise de consumo</div>
     <div id="recurringAnalysis"></div>
@@ -1096,7 +1090,6 @@ document.getElementById('registryToggle').addEventListener('click', ()=>{
 
 function renderMonth(){
   renderMonthStrip();
-  renderRegistryList();
 
   const list = getMonthBills(state.currentMonth);
   const sorted = [...list].sort((a,b)=> a.due.localeCompare(b.due));
@@ -1123,6 +1116,11 @@ function renderMonth(){
   highlightBills.forEach(bill => {
     const card = document.createElement('div');
     card.className = 'bill-highlight';
+    card.dataset.more = bill.id;
+    card.dataset.origin = bill.origin;
+    card.dataset.templateId = bill.templateId || '';
+    card.dataset.name = bill.name;
+    card.dataset.paid = '0';
     card.innerHTML = `
       <div class="bill-highlight-header">
         <div class="bill-highlight-badge">Vence hoje</div>
@@ -1134,9 +1132,6 @@ function renderMonth(){
           <div class="bill-highlight-name">${escapeHtml(bill.name)}</div>
           <div class="bill-highlight-due">Vence em ${formatDateBR(bill.due)}</div>
         </div>
-        <button class="bill-highlight-more" data-more="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}" data-paid="0" aria-label="Mais opções">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>
-        </button>
         <button class="bill-highlight-pay" data-pay="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}">
           Pagar agora
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
@@ -1356,6 +1351,7 @@ function renderRecurringAnalysis(){
 
 function renderRecurring(){
   renderRecurringAnalysis();
+  renderRegistryList();
   const list = state.recurring;
   document.getElementById('recCount').textContent = list.length;
   const total = list.reduce((s,r)=> s + (r.value||0), 0);
@@ -1797,13 +1793,13 @@ document.getElementById('billsList').addEventListener('click', (e)=>{
   const more = e.target.closest('[data-more]');
   const swipeCard = e.target.closest('[data-swipe-card]');
 
+  if(pay){ justDragged = false; openPayModal(pay.dataset.pay, pay.dataset.origin, pay.dataset.templateId, pay.dataset.name); closeOpenSwipe(); return; }
+  if(undo){ justDragged = false; openUndoModal(undo.dataset.undo, undo.dataset.origin, undo.dataset.templateId, undo.dataset.name); closeOpenSwipe(); return; }
   if(more){
     justDragged = false;
     openBillActionsSheet(more.dataset.more, more.dataset.origin, more.dataset.templateId, more.dataset.name, more.dataset.paid === '1');
     return;
   }
-  if(pay){ justDragged = false; openPayModal(pay.dataset.pay, pay.dataset.origin, pay.dataset.templateId, pay.dataset.name); closeOpenSwipe(); return; }
-  if(undo){ justDragged = false; openUndoModal(undo.dataset.undo, undo.dataset.origin, undo.dataset.templateId, undo.dataset.name); closeOpenSwipe(); return; }
 
   // Só chega aqui se o clique não foi em nenhum botão de ação — aí sim,
   // se veio de um arrasto (fechar/abrir o swipe), ignora esse clique "fantasma".
