@@ -40,7 +40,7 @@
     background:var(--bg);
     color:var(--text);
     min-height:100vh;
-    padding-bottom:36px;
+    padding-bottom:calc(104px + env(safe-area-inset-bottom, 0px));
     -webkit-font-smoothing:antialiased;
   }
   input, textarea, select, button{ font-family:inherit; touch-action: manipulation; }
@@ -298,34 +298,6 @@
   .stat-card .lab{ color:var(--muted); font-size:12.5px; margin-bottom:7px; }
   .stat-card .val{ font-size:20px; font-weight:800; letter-spacing:-.3px; color:var(--primary-dark); }
 
-  /* ---------- Análise de consumo (recorrentes) ---------- */
-  #recurringAnalysis{ display:flex; flex-direction:column; gap:var(--gap); margin-bottom:20px; }
-  .analysis-card{
-    background:#fff; border-radius:var(--radius); padding:15px 16px; box-shadow:0 1px 6px rgba(20,60,55,.05);
-  }
-  .analysis-head{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
-  .analysis-avatar{
-    width:36px; height:36px; border-radius:50%; background:var(--primary-light); color:var(--primary-dark);
-    display:flex; align-items:center; justify-content:center; flex-shrink:0;
-  }
-  .analysis-info{ flex:1; min-width:0; }
-  .analysis-name{ font-weight:700; font-size:14.5px; }
-  .analysis-latest{ font-size:12.5px; color:var(--muted); margin-top:1px; }
-  .analysis-badge{
-    font-size:12px; font-weight:800; padding:4px 9px; border-radius:8px; flex-shrink:0; white-space:nowrap;
-  }
-  .analysis-badge.up{ background:#FEEBEC; color:var(--red); }
-  .analysis-badge.down{ background:#E7F9F1; color:var(--green); }
-  .analysis-badge.flat{ background:var(--border); color:var(--muted); }
-  .analysis-bars{ display:flex; align-items:flex-end; gap:8px; height:64px; }
-  .analysis-bar-col{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
-  .analysis-bar{
-    width:100%; max-width:28px; background:var(--primary-light); border-radius:6px 6px 3px 3px;
-    height:0; transition:height .7s cubic-bezier(.22,.9,.34,1);
-  }
-  .analysis-bar.current{ background:var(--gradient); }
-  .analysis-bar-label{ font-size:10px; color:var(--muted); font-weight:700; margin-top:6px; }
-
   #recurringList{ display:flex; flex-direction:column; gap:var(--gap); }
   .rec-card{
     background:#fff; border-radius:var(--radius); padding:13px 14px; box-shadow:0 1px 6px rgba(20,60,55,.05);
@@ -473,8 +445,6 @@
       </button>
       <div class="registry-list hidden" id="registryList"></div>
     </div>
-    <div class="section-title" id="analysisTitle" style="display:none;">Análise de consumo</div>
-    <div id="recurringAnalysis"></div>
     <div class="section-title">Suas contas recorrentes</div>
     <div id="recurringList"></div>
   </section>
@@ -1059,12 +1029,26 @@ function renderRegistryList(){
   const installmentRows = (state.installments || []).map(inst => {
     const idx = Math.max(0, Math.min(inst.totalInstallments - 1, monthsDiff(inst.startMonth, realCurrentMonth)));
     const total = inst.value * inst.totalInstallments;
+
+    let paidCount = 0, paidTotal = 0;
+    for(let i = 0; i < inst.totalInstallments; i++){
+      const mk = addMonths(inst.startMonth, i);
+      const isPaid = !!(state.installmentStatus[inst.id] && state.installmentStatus[inst.id][mk]);
+      if(isPaid){
+        const override = state.installmentOverrides[inst.id] && state.installmentOverrides[inst.id][mk];
+        const value = override && override.value !== undefined ? override.value : inst.value;
+        paidCount++;
+        paidTotal += value;
+      }
+    }
+
     return `
       <div class="registry-row">
         <div class="registry-avatar">${billIcon(inst.name)}</div>
         <div class="registry-info">
           <div class="registry-name">${escapeHtml(inst.name)}</div>
           <div class="registry-sub">Parcelado · ${idx+1}/${inst.totalInstallments} · ${formatCentsToBRL(inst.value)} por mês</div>
+          <div class="registry-sub">Pago até agora: ${formatCentsToBRL(paidTotal)} (${paidCount}/${inst.totalInstallments})</div>
         </div>
         <div class="registry-right">
           <div class="registry-value">${formatCentsToBRL(total)}</div>
@@ -1258,99 +1242,7 @@ document.getElementById('billsList').addEventListener('pointercancel', endSwipe)
 /* ==========================================================================
    RENDER — CONTAS RECORRENTES
    ========================================================================== */
-/**
- * Pra cada conta recorrente, monta o valor pago nos últimos meses (usando o
- * ajuste daquele mês se existir, senão o valor padrão da conta) e mostra
- * como uma barrinha animada, com um selo de quanto subiu ou desceu em
- * relação ao mês anterior.
- */
-function renderRecurringAnalysis(){
-  const container = document.getElementById('recurringAnalysis');
-  const title = document.getElementById('analysisTitle');
-  container.innerHTML = '';
-
-  const realCurrentMonth = monthKey(new Date());
-  const MAX_MONTHS = 6;
-
-  const cardsData = [];
-
-  state.recurring.forEach(rec => {
-    const months = [];
-    for(let i = MAX_MONTHS - 1; i >= 0; i--){
-      const mk = addMonths(realCurrentMonth, -i);
-      if(mk < rec.startMonth) continue;
-      const override = state.recurringOverrides[rec.id] && state.recurringOverrides[rec.id][mk];
-      const value = override && override.value !== undefined ? override.value : rec.value;
-      months.push({ mk, value });
-    }
-    if(months.length < 2) return; // precisa de pelo menos 2 meses pra comparar
-
-    const last = months[months.length - 1].value;
-    const prev = months[months.length - 2].value;
-    let pct = null;
-    if(prev > 0) pct = Math.round(((last - prev) / prev) * 100);
-
-    cardsData.push({ rec, months, last, pct });
-  });
-
-  title.style.display = cardsData.length ? '' : 'none';
-  if(!cardsData.length) return;
-
-  const maxVal = Math.max(1, ...cardsData.flatMap(c => c.months.map(m => m.value)));
-
-  cardsData.forEach(({ rec, months, last, pct }) => {
-    const card = document.createElement('div');
-    card.className = 'analysis-card';
-
-    let badgeHtml = '';
-    if(pct === null){
-      badgeHtml = '';
-    }else if(pct > 0){
-      badgeHtml = `<div class="analysis-badge up">↑ ${pct}%</div>`;
-    }else if(pct < 0){
-      badgeHtml = `<div class="analysis-badge down">↓ ${Math.abs(pct)}%</div>`;
-    }else{
-      badgeHtml = `<div class="analysis-badge flat">Igual</div>`;
-    }
-
-    const barsHtml = months.map((m, i) => {
-      const [y, mm] = m.mk.split('-').map(Number);
-      const isCurrent = i === months.length - 1;
-      return `
-        <div class="analysis-bar-col">
-          <div class="analysis-bar${isCurrent ? ' current' : ''}" data-target-h="${Math.round((m.value / maxVal) * 100)}"></div>
-          <div class="analysis-bar-label">${MESES_ABREV[mm-1]}</div>
-        </div>
-      `;
-    }).join('');
-
-    card.innerHTML = `
-      <div class="analysis-head">
-        <div class="analysis-avatar">${billIcon(rec.name)}</div>
-        <div class="analysis-info">
-          <div class="analysis-name">${escapeHtml(rec.name)}</div>
-          <div class="analysis-latest">Último: ${formatCentsToBRL(last)}</div>
-        </div>
-        ${badgeHtml}
-      </div>
-      <div class="analysis-bars">${barsHtml}</div>
-    `;
-    container.appendChild(card);
-  });
-
-  // Anima as barras crescendo, toda vez que a aba é aberta/renderizada.
-  requestAnimationFrame(()=>{
-    requestAnimationFrame(()=>{
-      container.querySelectorAll('.analysis-bar').forEach(bar=>{
-        const h = bar.dataset.targetH || 0;
-        bar.style.height = Math.max(6, Number(h)) + '%';
-      });
-    });
-  });
-}
-
 function renderRecurring(){
-  renderRecurringAnalysis();
   renderRegistryList();
   const list = state.recurring;
   document.getElementById('recCount').textContent = list.length;
