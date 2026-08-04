@@ -1314,6 +1314,9 @@ function setView(view){
     state.currentMonth = monthKey(new Date());
     renderMonth();
   }
+  if(view === 'recurring' && state){
+    renderRecurring();
+  }
   const activeBtn = document.querySelector(`.view-toggle-btn[data-view="${view}"]`);
   document.querySelectorAll('.view-toggle-btn').forEach(b=>{
     const isActive = b === activeBtn;
