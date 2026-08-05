@@ -1,0 +1,1843 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FinUp">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0A0A0C">
+<title>FinUp</title>
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --primary:#141416;
+    --primary-dark:#0A0A0B;
+    --primary-light:#F0F0F2;
+    --gradient: linear-gradient(135deg, #232326 0%, #0A0A0B 100%);
+    --accent:#F43F5E;
+    --accent-light:#FDE8EC;
+    --bg:#F8FAFC;
+    --card:#ffffff;
+    --red:#F43F5E;
+    --amber:#d99425;
+    --green:#10B981;
+    --text:#0A0A0B;
+    --muted:#A1A1AA;
+    --border:#EEF0F3;
+    --gap:12px;
+    --radius:22px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{ touch-action: manipulation; overscroll-behavior-y: contain; }
+  body{
+    margin:0;
+    font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    padding-bottom:calc(104px + env(safe-area-inset-bottom, 0px));
+    -webkit-font-smoothing:antialiased;
+  }
+  input, textarea, select, button{ font-family:inherit; touch-action: manipulation; }
+  input[type="text"], input[type="number"], input[type="date"], textarea{ font-size:16px; }
+
+  /* ---------- Header ---------- */
+  header.topbar{
+    position:relative;
+    background:var(--gradient);
+    padding:14px 18px 22px;
+    padding-top:calc(14px + env(safe-area-inset-top, 0px));
+    display:flex; align-items:center; justify-content:space-between;
+    border-radius:0 0 32px 32px;
+  }
+  header.topbar .brand{ color:#fff; font-weight:800; font-size:22px; letter-spacing:-.3px; display:flex; align-items:center; gap:1px; }
+  .brand-up{ color:var(--accent); }
+  .icon-btn{
+    width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.18); color:#fff;
+  }
+  .icon-btn:active{ transform:scale(.92); }
+  .header-wave{ position:absolute; left:0; right:0; bottom:-1px; width:100%; height:26px; display:block; }
+
+  main{ max-width:560px; margin:0 auto; padding:6px 11px 0; min-height:60vh; }
+  .page-title{ text-align:center; font-size:21px; font-weight:800; margin:14px 0 12px; letter-spacing:-.3px; }
+
+  /* ---------- Header actions / view toggle ---------- */
+  .bottom-bar{
+    position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom, 0px)); transform:translateX(-50%);
+    display:flex; align-items:center; gap:12px; z-index:59;
+  }
+  .bottom-nav{
+    background:rgba(10,10,11,.94); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border-radius:999px; padding:13px 24px; display:flex; align-items:center; gap:26px;
+    box-shadow:0 14px 30px rgba(0,0,0,.3); border:1px solid rgba(255,255,255,.08);
+  }
+  .bottom-nav-btn{ background:none; border:none; padding:0; color:rgba(255,255,255,.42); cursor:pointer; display:flex; }
+  .bottom-nav-btn.active{ color:var(--accent); }
+
+  /* ---------- Card do mês ---------- */
+  .month-card{
+    background:var(--gradient); border-radius:18px; padding:12px 12px 12px; margin:0 0 16px;
+    box-shadow:0 8px 24px rgba(0,0,0,.14);
+  }
+  .month-card-title{ color:rgba(255,255,255,.55); text-align:center; font-size:11px; font-weight:800; margin:0 0 8px; letter-spacing:.18em; text-transform:uppercase; }
+  .month-strip{ display:flex; align-items:center; gap:6px; }
+  .month-strip-arrow{
+    background:rgba(255,255,255,.16); border:1.5px solid rgba(255,255,255,.55); color:#fff;
+    width:30px; height:30px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
+  }
+  .month-strip-arrow:active{ background:rgba(255,255,255,.3); }
+  .month-timeline-track{ flex:1; position:relative; height:66px; }
+  .month-timeline-line{
+    position:absolute; left:4px; right:4px; top:50%; height:1px;
+    background:rgba(255,255,255,.35); transform:translateY(-50%);
+  }
+  .month-points{ position:absolute; inset:0; display:flex; align-items:center; justify-content:space-between; }
+  .month-point{ position:relative; display:flex; align-items:center; justify-content:center; background:none; border:none; padding:0; cursor:pointer; }
+  .month-point-dot{ width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.85); }
+  .month-point-label{
+    position:absolute; bottom:100%; margin-bottom:6px; text-align:center; white-space:nowrap;
+    font-size:10.5px; font-weight:700; color:rgba(255,255,255,.8); line-height:1.2;
+  }
+  .month-point.active .month-point-circle{
+    width:52px; height:52px; border-radius:50%; border:2.5px solid var(--accent); background:var(--primary-dark);
+    display:flex; align-items:center; justify-content:center; flex-direction:column;
+    color:#fff; font-weight:800; font-size:12px; line-height:1.2; position:relative; z-index:1;
+  }
+  .month-point.active .month-point-circle span:first-child{ color:var(--accent); font-size:10.5px; }
+  .month-point .chip-month-input{ position:absolute; inset:0; opacity:0; cursor:pointer; }
+
+  /* ---------- Summary card ---------- */
+  .summary-card{
+    background:#fff; border-radius:24px; padding:20px 8px; margin:-20px 6px 18px; position:relative;
+    display:flex; box-shadow:0 14px 28px rgba(10,10,11,.1); z-index:20;
+  }
+  .summary-card .col{ flex:1; text-align:center; }
+  .summary-card .divider{ width:1px; background:var(--border); }
+  .summary-card .lab{ font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin-bottom:6px; }
+  .summary-card .lab.pay{ color:var(--accent); }
+  .summary-card .lab.paid{ color:var(--green); }
+  .summary-card .val{ font-size:20px; font-weight:800; letter-spacing:-.3px; }
+
+  .fab-add{
+    width:54px; height:54px; border-radius:50%; background:var(--accent); border:none; color:#fff;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
+    box-shadow:0 12px 24px rgba(244,63,94,.4);
+  }
+  .fab-add:active{ opacity:.88; }
+  .fab-add.hidden{ display:none !important; }
+
+  .auth-desc{ color:var(--muted); font-size:13.5px; margin:-6px 0 14px; line-height:1.5; }
+
+  /* ---------- Tela de bloqueio ---------- */
+  .lock-screen{
+    position:fixed; inset:0; z-index:500;
+    background:rgba(243,246,255,.55);
+    backdrop-filter:blur(22px); -webkit-backdrop-filter:blur(22px);
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .lock-screen.hidden{ display:none; }
+  .lock-card{
+    background:#fff; border-radius:22px; padding:30px 22px 26px; width:100%; max-width:340px;
+    box-shadow:0 20px 60px rgba(16,25,58,.28); text-align:center;
+  }
+  .lock-icon{
+    width:58px; height:58px; border-radius:50%; background:var(--primary-light); color:var(--primary-dark);
+    display:flex; align-items:center; justify-content:center; margin:0 auto 14px; font-size:26px;
+  }
+  .lock-card h2{ margin:0 0 6px; font-size:19px; letter-spacing:-.3px; }
+  .lock-card .field{ text-align:left; }
+  .btn-new:active{ opacity:.88; }
+
+  .section-title{ font-size:15px; font-weight:800; margin:4px 2px 12px; }
+
+  /* ---------- Bill card ---------- */
+  #billsList{ display:flex; flex-direction:column; gap:var(--gap); }
+  .bill-card{
+    background:var(--card); border-radius:var(--radius); padding:16px 17px;
+    box-shadow:0 1px 6px rgba(20,60,55,.05);
+    border-left:4px solid transparent;
+  }
+  .bill-card.status-late{ border-left-color:var(--red); }
+  .bill-card.status-pending{ border-left-color:var(--amber); }
+  .bill-card.status-paid{ border-left-color:var(--green); opacity:.62; }
+  .bill-card.status-paid .bill-value{ text-decoration:line-through; text-decoration-color:var(--muted); }
+  .bill-top{ display:flex; align-items:center; gap:13px; }
+  .bill-avatar{
+    width:48px; height:48px; border-radius:50%; background:var(--primary-light); color:var(--primary-dark);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .bill-info{ flex:1; min-width:0; }
+  .bill-name{ font-weight:700; font-size:16.5px; }
+  .bill-due{ color:var(--muted); font-size:13.5px; margin-top:2px; }
+  .bill-right{ text-align:right; flex-shrink:0; }
+  .bill-value{ font-size:16.5px; font-weight:800; }
+  .bill-status{ font-size:12.5px; font-weight:700; margin-top:2px; }
+  .bill-status.late{ color:var(--red); }
+  .bill-status.pending{ color:var(--amber); }
+  .bill-status.paid{ color:var(--green); }
+
+  .bill-actions-row{ display:flex; align-items:center; justify-content:space-between; margin-top:8px; padding-top:8px; border-top:1px solid var(--border); }
+  .bill-icon-actions{ display:flex; gap:10px; }
+  .icon-action{ background:none; border:none; cursor:pointer; color:#b3bdba; padding:2px; display:flex; }
+  .icon-action:active{ opacity:.55; }
+  .icon-action.disabled{ opacity:.3; cursor:not-allowed; }
+  .icon-action.disabled:active{ opacity:.3; }
+  .btn-pagar{
+    background:var(--primary); color:#fff; border:none; border-radius:9px; padding:6px 13px;
+    font-weight:700; font-size:12px; display:flex; align-items:center; gap:5px; cursor:pointer;
+  }
+  .btn-undo{
+    background:none; border:none; color:var(--muted); font-weight:600; font-size:12px;
+    display:flex; align-items:center; gap:5px; cursor:pointer;
+  }
+
+  .empty-state{ text-align:center; color:var(--muted); padding:56px 20px; font-size:14.5px; }
+
+  /* ---------- Todas as contas cadastradas (lista minimizada) ---------- */
+  .registry-card{
+    background:#fff; border-radius:var(--radius); box-shadow:0 1px 6px rgba(20,60,55,.05);
+    margin-bottom:18px; overflow:hidden;
+  }
+  .registry-toggle{
+    width:100%; background:none; border:none; padding:14px 16px; display:flex; align-items:center;
+    justify-content:space-between; font-weight:700; font-size:14px; color:var(--text); cursor:pointer;
+  }
+  #registryChevron{ transition:transform .2s ease; color:var(--muted); flex-shrink:0; }
+  .registry-toggle.open #registryChevron{ transform:rotate(180deg); }
+  .registry-list{ padding:0 16px 14px; display:flex; flex-direction:column; gap:10px; }
+  .registry-row{ display:flex; align-items:center; gap:10px; padding-top:10px; border-top:1px solid var(--border); }
+  .registry-row:first-child{ border-top:none; padding-top:0; }
+  .registry-avatar{
+    width:32px; height:32px; border-radius:50%; background:var(--primary-light); color:var(--primary-dark);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .registry-info{ flex:1; min-width:0; }
+  .registry-name{ font-weight:700; font-size:13.5px; }
+  .registry-sub{ font-size:11.5px; color:var(--muted); margin-top:1px; }
+  .registry-right{ text-align:right; flex-shrink:0; }
+  .registry-value{ font-weight:800; font-size:13.5px; }
+  .registry-tag{ font-size:10.5px; color:var(--muted); margin-top:1px; }
+  .registry-empty{ color:var(--muted); font-size:13px; padding-top:4px; }
+
+  /* ---------- Card de destaque (próxima a vencer) ---------- */
+  .bill-highlight{
+    background:var(--gradient); border-radius:26px; padding:18px 20px; color:#fff;
+    box-shadow:0 14px 28px rgba(0,0,0,.22); margin-bottom:var(--gap); cursor:pointer;
+  }
+  .bill-highlight-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .bill-highlight-badge{
+    display:inline-block; background:var(--accent); color:#fff; font-size:10px; font-weight:800;
+    letter-spacing:.05em; text-transform:uppercase; padding:5px 11px; border-radius:999px;
+    box-shadow:0 6px 14px rgba(244,63,94,.35);
+  }
+  .bill-highlight-value{ font-size:19px; font-weight:800; opacity:.95; }
+  .bill-highlight-top{ display:flex; align-items:center; gap:11px; }
+  .bill-highlight-avatar{
+    width:42px; height:42px; border-radius:50%; background:rgba(255,255,255,.22); color:#fff;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .bill-highlight-info{ flex:1; min-width:0; }
+  .bill-highlight-name{ font-weight:800; font-size:16.5px; }
+  .bill-highlight-due{ font-size:12.5px; opacity:.85; margin-top:1px; }
+  .bill-highlight-pay{
+    background:#fff; color:var(--primary-dark); border:none; border-radius:11px; flex-shrink:0;
+    padding:11px 17px; font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center;
+    gap:6px; cursor:pointer;
+  }
+  .bill-highlight-pay:active{ opacity:.88; }
+
+  /* ---------- Arrastar pro lado (swipe) ---------- */
+  .bill-swipe-wrap{ position:relative; border-radius:var(--radius); }
+  .bill-swipe-actions{
+    position:absolute; top:0; right:0; bottom:0; width:132px; display:flex;
+    border-top-right-radius:var(--radius); border-bottom-right-radius:var(--radius);
+    border-top-left-radius:0; border-bottom-left-radius:0;
+    overflow:hidden;
+  }
+  .swipe-btn{
+    flex:1; border:none; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:3px; color:#fff; font-size:11px; font-weight:700; cursor:pointer; padding:0;
+  }
+  .swipe-more{ background:#9aa4b8; }
+  .swipe-pay{ background:var(--primary); }
+  .swipe-pay.undo{ background:#E08A2E; }
+  .bill-swipe-card{
+    position:relative; z-index:1; touch-action:pan-y; user-select:none;
+    -webkit-user-select:none; border-radius:var(--radius);
+  }
+  .bill-swipe-card.swiped-open{ border-top-right-radius:0; border-bottom-right-radius:0; }
+  .empty-state .icon{ display:flex; align-items:center; justify-content:center; margin-bottom:10px; }
+
+  /* ---------- Recurring view ---------- */
+  .rec-header{ padding:6px 0 6px; text-align:center; display:flex; flex-direction:column; align-items:center; }
+  .rec-header .rec-icon{
+    width:56px; height:56px; border-radius:50%; background:var(--primary-light); color:var(--primary-dark);
+    display:flex; align-items:center; justify-content:center; margin-bottom:12px;
+  }
+  .rec-header p{ color:var(--muted); margin:0 auto 18px; font-size:13.5px; line-height:1.5; max-width:300px; }
+  .btn-small{
+    background:var(--gradient); color:#fff; border:none; border-radius:13px; padding:14px 20px;
+    font-weight:700; font-size:14.5px; display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    cursor:pointer; width:100%; max-width:340px; margin:0 auto 22px; box-shadow:0 4px 14px rgba(0,0,0,.25);
+  }
+  .stats-row{ display:grid; grid-template-columns:1fr 1fr; gap:var(--gap); margin-bottom:20px; }
+  .stat-card{ border:1px solid var(--border); border-radius:var(--radius); padding:16px 14px; background:#fff; text-align:center; }
+  .stat-card .lab{ color:var(--muted); font-size:12.5px; margin-bottom:7px; }
+  .stat-card .val{ font-size:20px; font-weight:800; letter-spacing:-.3px; color:var(--primary-dark); }
+
+  #recurringList{ display:flex; flex-direction:column; gap:var(--gap); }
+  .rec-card{
+    background:#fff; border-radius:var(--radius); padding:13px 14px; box-shadow:0 1px 6px rgba(20,60,55,.05);
+    display:flex; align-items:center; gap:12px;
+  }
+  .rec-card .info{ flex:1; min-width:0; }
+  .rec-card .info .name{ font-weight:700; font-size:15px; }
+  .rec-card .info .sub{ color:var(--muted); font-size:12.5px; margin-top:2px; }
+  .rec-card .value{ font-weight:800; font-size:15px; white-space:nowrap; }
+  .rec-card .rec-actions{ display:flex; gap:10px; margin-left:2px; flex-shrink:0; }
+
+  /* ---------- Modals ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(15,38,34,.5); display:none;
+    align-items:flex-end; justify-content:center; z-index:100;
+  }
+  .overlay.show{ display:flex; }
+  .modal{
+    background:#fff; width:100%; max-width:560px; border-radius:22px 22px 0 0;
+    padding:22px 20px 26px; animation:slideUp .18s ease;
+    max-height:88vh; overflow-y:auto;
+  }
+  @media (min-width:600px){ .overlay{ align-items:center; } .modal{ border-radius:22px; } }
+  @keyframes slideUp{ from{ transform:translateY(24px); opacity:0;} to{ transform:translateY(0); opacity:1;} }
+  .modal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+  .modal-head h2{ font-size:19px; margin:0; letter-spacing:-.3px; }
+  .modal-close{ background:none;border:none;cursor:pointer;color:#333; padding:4px; }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-weight:600; font-size:13.5px; margin-bottom:6px; color:#333; }
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+  .field input, .field textarea{
+    width:100%; border:1px solid #e2e5eb; border-radius:12px; padding:12px 13px;
+    font-size:15.5px; color:var(--text); background:#fbfbfd;
+  }
+  .field textarea{ resize:vertical; min-height:64px; }
+  .field-checkbox{ margin-bottom:14px; }
+  .checkbox-label{
+    display:flex; align-items:center; gap:9px; font-weight:600; font-size:14.5px; color:var(--text); cursor:pointer;
+  }
+  .checkbox-label input[type="checkbox"]{ width:19px; height:19px; accent-color:var(--primary); cursor:pointer; }
+  .field input:focus, .field textarea:focus{ outline:2px solid var(--primary); outline-offset:1px; }
+  .btn-primary{
+    width:100%; background:var(--gradient); color:#fff; border:none; border-radius:14px;
+    padding:15px; font-size:15.5px; font-weight:700; cursor:pointer; margin-top:2px;
+  }
+  .btn-primary:active{ opacity:.85; }
+  .btn-primary.disabled{ opacity:.4; cursor:not-allowed; }
+  .btn-primary.disabled:active{ opacity:.4; }
+  .btn-danger{ background:var(--red); }
+  .btn-cancel{
+    width:100%; background:none; border:none; color:var(--text); font-size:15px;
+    padding:13px; cursor:pointer; font-weight:600;
+  }
+  .confirm-modal{ text-align:center; }
+  .confirm-modal .badge-icon{
+    width:58px;height:58px;border-radius:50%;background:var(--primary-light);
+    display:flex;align-items:center;justify-content:center;margin:0 auto 14px; color:var(--primary-dark);
+  }
+  .confirm-modal h2{ margin:0 0 6px; font-size:19px; }
+  .confirm-modal p{ color:var(--muted); margin:0 0 20px; font-size:14.5px; line-height:1.4; }
+  .confirm-modal p b{ color:var(--text); }
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%);
+    background:var(--primary-dark); color:#fff; padding:11px 18px; border-radius:12px;
+    font-size:13.5px; font-weight:600; line-height:1.4; z-index:200; opacity:0; pointer-events:none;
+    transition:opacity .25s, transform .25s; box-shadow:0 6px 20px rgba(0,0,0,.2);
+    max-width:92vw; width:max-content; text-align:left;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(-6px); pointer-events:auto; cursor:pointer; }
+
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">Fin<span class="brand-up">Up</span></div>
+  <button class="icon-btn" id="btnBell" aria-label="Notificações">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+  </button>
+</header>
+
+<main>
+  <section id="viewMonth">
+    <div class="month-card">
+      <h1 class="month-card-title">Contas do mês</h1>
+      <div class="month-strip">
+        <button id="prevMonth" class="month-strip-arrow" aria-label="Mês anterior">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div class="month-timeline-track">
+          <div class="month-timeline-line"></div>
+          <div class="month-points" id="monthStripTrack"></div>
+        </div>
+        <button id="nextMonth" class="month-strip-arrow" aria-label="Próximo mês">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="col"><div class="lab pay">A pagar</div><div class="val" id="totalToPay">R$ 0,00</div></div>
+      <div class="divider"></div>
+      <div class="col"><div class="lab paid">Pagas</div><div class="val" id="totalPaid">R$ 0,00</div></div>
+
+    </div>
+
+    <div class="section-title">Próximas contas</div>
+    <div id="billsList"></div>
+  </section>
+
+  <section id="viewRecurring" class="hidden">
+    <div class="rec-header">
+      <div class="rec-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      </div>
+      <h1 class="page-title" style="margin:0 0 8px;">Recorrentes</h1>
+      <p>Cadastre aqui suas contas fixas mensais. Elas aparecem automaticamente todo mês.</p>
+      <button class="btn-small" id="btnNewRecurring">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        Nova conta recorrente
+      </button>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="lab">Contas cadastradas</div><div class="val" id="recCount">0</div></div>
+      <div class="stat-card"><div class="lab">Total estimado</div><div class="val" id="recTotal">R$ 0,00</div></div>
+    </div>
+    <div class="registry-card">
+      <button class="registry-toggle" id="registryToggle">
+        <span>Todas as contas cadastradas</span>
+        <svg id="registryChevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="registry-list hidden" id="registryList"></div>
+    </div>
+    <div class="section-title">Suas contas recorrentes</div>
+    <div id="recurringList"></div>
+  </section>
+</main>
+
+<div class="bottom-bar">
+  <nav class="bottom-nav" role="tablist" aria-label="Alternar visão">
+    <button class="bottom-nav-btn active" data-view="month" role="tab" aria-selected="true" aria-label="Contas do mês">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V21a1 1 0 01-1 1h-5v-7H9v7H4a1 1 0 01-1-1z"/></svg>
+    </button>
+    <button class="bottom-nav-btn" data-view="recurring" role="tab" aria-selected="false" aria-label="Recorrentes">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+    </button>
+  </nav>
+  <button class="fab-add" id="btnNewBill" aria-label="Nova conta">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+</div>
+
+<!-- Modal: Nova/editar conta do mês -->
+<div class="overlay" id="modalBill">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modalBillTitle">Nova conta</h2>
+      <button class="modal-close" data-close="modalBill">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="field">
+      <label>Nome da conta</label>
+      <input type="text" id="billName" placeholder="Ex: Conta de luz">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Valor (opcional)</label>
+        <input type="text" id="billValue" inputmode="numeric" placeholder="R$ 0,00">
+      </div>
+      <div class="field">
+        <label>Vencimento</label>
+        <input type="date" id="billDue">
+      </div>
+    </div>
+    <div class="field">
+      <label>Observação</label>
+      <textarea id="billNote" placeholder="Opcional"></textarea>
+    </div>
+    <div class="field-checkbox" id="billInstallmentRow">
+      <label class="checkbox-label">
+        <input type="checkbox" id="billInstallmentToggle">
+        Parcelar essa conta
+      </label>
+    </div>
+    <div class="field hidden" id="billInstallmentField">
+      <label id="billInstallmentFieldLabel">Quantidade de parcelas</label>
+      <input type="text" id="billInstallmentCount" inputmode="numeric" placeholder="Ex: 20">
+    </div>
+    <button class="btn-primary" id="billSubmit">Adicionar</button>
+    <button class="btn-cancel" data-close="modalBill">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal: Nova/editar conta recorrente -->
+<div class="overlay" id="modalRecurring">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modalRecTitle">Nova conta recorrente</h2>
+      <button class="modal-close" data-close="modalRecurring">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="field">
+      <label>Nome</label>
+      <input type="text" id="recName" placeholder="Ex: Conta de água">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Valor padrão (opcional)</label>
+        <input type="text" id="recValue" inputmode="numeric" placeholder="R$ 0,00">
+      </div>
+      <div class="field">
+        <label>Dia de vencimento</label>
+        <input type="text" id="recDay" inputmode="numeric" maxlength="2" placeholder="Ex: 10">
+      </div>
+    </div>
+    <div class="field">
+      <label>Observação</label>
+      <textarea id="recNote" placeholder="Opcional"></textarea>
+    </div>
+    <button class="btn-primary" id="recSubmit">Adicionar</button>
+    <button class="btn-cancel" data-close="modalRecurring">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal: confirmar pagamento -->
+<div class="overlay" id="modalPay">
+  <div class="modal confirm-modal">
+    <div class="badge-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg>
+    </div>
+    <h2>Marcar como pago?</h2>
+    <p>Confirmar o pagamento de <b id="payBillName"></b>?</p>
+    <button class="btn-primary" id="payConfirm">Confirmar pagamento</button>
+    <button class="btn-cancel" data-close="modalPay">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal: confirmar desfazer -->
+<div class="overlay" id="modalUndo">
+  <div class="modal confirm-modal">
+    <div class="badge-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1015-6.7L3 13"/></svg>
+    </div>
+    <h2>Desfazer pagamento?</h2>
+    <p>Confirmar que deseja desfazer o pagamento de <b id="undoBillName"></b>?</p>
+    <button class="btn-primary" id="undoConfirm">Desfazer pagamento</button>
+    <button class="btn-cancel" data-close="modalUndo">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal: ações da conta (Editar / Excluir), aberto pelo "Mais" do swipe -->
+<div class="overlay" id="modalBillActions">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>O que deseja fazer?</h2>
+      <button class="modal-close" data-close="modalBillActions">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <button class="btn-primary" id="billActionsEdit">Editar</button>
+    <button class="btn-primary btn-danger" id="billActionsDelete" style="margin-top:10px;">Excluir</button>
+    <button class="btn-cancel" data-close="modalBillActions">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal: excluir -->
+<div class="overlay" id="modalDelete">
+  <div class="modal confirm-modal">
+    <h2>Excluir conta</h2>
+    <p id="deleteMessage">Deseja realmente excluir esta conta? Esta ação não pode ser desfeita.</p>
+    <button class="btn-primary btn-danger" id="deleteConfirm">Excluir</button>
+    <button class="btn-cancel" data-close="modalDelete">Cancelar</button>
+  </div>
+</div>
+
+<!-- Tela de bloqueio: aparece sempre que o app abre, com o fundo borrado -->
+<div class="lock-screen hidden" id="lockScreen">
+  <div class="lock-card">
+    <div class="lock-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+    </div>
+    <h2>Digite sua senha</h2>
+    <p class="auth-desc">Digite a senha para acessar o FinUp.</p>
+    <div class="field">
+      <input type="password" id="lockPassword" placeholder="Senha" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" id="lockSubmit">Desbloquear</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, getDocFromCache, setDoc, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { getMessaging, getToken, onMessage, isSupported as isMessagingSupported } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging.js";
+
+/* ==========================================================================
+   FIREBASE
+   ========================================================================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDAHZEjirkb5ililKMim-2CDJ3lvyt87FE",
+  authDomain: "fincontrol-app-bb06f.firebaseapp.com",
+  projectId: "fincontrol-app-bb06f",
+  storageBucket: "fincontrol-app-bb06f.firebasestorage.app",
+  messagingSenderId: "690750174567",
+  appId: "1:690750174567:web:1e45e728f7785279cc2bc2",
+  measurementId: "G-3PN1QCHM07"
+};
+const VAPID_KEY = "BD6_Xv24zSQ462udzx_s_PjoF8qkp_2yPek5G0yMCs_vvaCEf8hWWUYkz8-nkmDENAibMMGtzXdQiVX36slRydA";
+// E-mail fixo usado só internamente pelo Firebase Auth — o usuário nunca vê isso, só digita a senha.
+const APP_EMAIL = "dono@fincontrol-app.local";
+
+const fbApp = initializeApp(firebaseConfig);
+const fbAuth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+enableIndexedDbPersistence(db).catch((err) => {
+  // Acontece normalmente se o app estiver aberto em duas abas ao mesmo tempo — sem problema, só não cacheia.
+  console.warn('Persistência offline não habilitada:', err.code);
+});
+let fbMessaging = null;
+let currentUid = null;
+const LOCK_DURATION_MS = 24 * 60 * 60 * 1000; // fica desbloqueado por 24h
+
+function ensureSignedIn(){
+  return new Promise((resolve) => {
+    let resolved = false;
+    onAuthStateChanged(fbAuth, async (user) => {
+      if(user){
+        const uidChanged = currentUid !== null && currentUid !== user.uid;
+        currentUid = user.uid;
+        if(uidChanged){
+          // Trocou de conta (ex: digitou a senha de uma conta já existente
+          // depois de reinstalar) — recarrega os dados dessa conta na tela.
+          await loadState();
+          state.currentMonth = monthKey(new Date());
+          renderMonth();
+          renderRecurring();
+        }
+        if(!resolved){
+          resolved = true;
+          const lastUnlock = parseInt(localStorage.getItem('fincontrol_last_unlock') || '0', 10);
+          const aindaDentroDaJanela = (Date.now() - lastUnlock) < LOCK_DURATION_MS;
+          if(aindaDentroDaJanela){
+            markUnlocked(); // renova a janela de 24h a partir de agora
+          }else{
+            showLock();
+          }
+          resolve(user.uid);
+        }
+      }else{
+        // Sem sessão salva (ex: reinstalou o app) — continua funcionando
+        // por baixo dos panos com um perfil novo, sem travar nada; a tela
+        // de bloqueio acima é quem decide o que o usuário consegue ver.
+        signInAnonymously(fbAuth).catch(e => console.error('Erro no login anônimo:', e));
+      }
+    });
+  });
+}
+
+/* ==========================================================================
+   TELA DE BLOQUEIO (senha, sem e-mail visível pro usuário)
+   -------------------------------------------------------------------------
+   Só pede a senha já configurada (criada direto no Firebase, fora do app).
+   Fica desbloqueado por 24h (LOCK_DURATION_MS) — só pede a senha de novo
+   depois que esse tempo passar.
+   ========================================================================== */
+
+function markUnlocked(){
+  localStorage.setItem('fincontrol_last_unlock', String(Date.now()));
+}
+
+function showLock(){
+  document.getElementById('lockPassword').value = '';
+  document.getElementById('lockScreen').classList.remove('hidden');
+}
+
+function hideLock(){
+  document.getElementById('lockScreen').classList.add('hidden');
+  markUnlocked();
+}
+
+document.getElementById('lockSubmit').addEventListener('click', async ()=>{
+  const pass = document.getElementById('lockPassword').value;
+  if(!pass || pass.length < 6){ showToast('A senha precisa ter pelo menos 6 caracteres'); return; }
+  try{
+    await signInWithEmailAndPassword(fbAuth, APP_EMAIL, pass);
+    hideLock();
+  }catch(e){
+    if(e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential'){ showToast('Senha incorreta', true); }
+    else if(e.code === 'auth/user-not-found'){ showToast('Nenhuma senha configurada ainda para esta conta', true); }
+    else{ showToast('Erro ao desbloquear: ' + e.message, true); }
+  }
+});
+
+/* ==========================================================================
+   UTILITÁRIOS DE DATA
+   ========================================================================== */
+function pad2(n){ return String(n).padStart(2,'0'); }
+function monthKey(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}`; }
+function todayISO(){ const t=new Date(); t.setHours(0,0,0,0); return t; }
+function addMonths(mk, delta){
+  const [y,m] = mk.split('-').map(Number);
+  return monthKey(new Date(y, m-1+delta, 1));
+}
+
+/* ==========================================================================
+   ESTADO
+   -------------------------------------------------------------------------
+   As contas recorrentes NÃO são copiadas por mês: elas são calculadas na
+   hora (getMonthBills), a partir do cadastro em `recurring`. Isso garante
+   que editar ou excluir uma conta recorrente afete automaticamente TODOS
+   os meses, sem deixar cópias "presas" pra trás.
+   ========================================================================== */
+let state = null;
+
+function seedData(){
+  return {
+    currentMonth: '2026-07',
+    recurring: [
+      { id:'r1', name:'Cartão', value:5000, day:15, note:'', startMonth:'2026-07' },
+      { id:'r2', name:'Conta de Água', value:8550, day:10, note:'Companhia de saneamento', startMonth:'2026-07' },
+      { id:'r3', name:'Conta de Luz', value:15000, day:15, note:'', startMonth:'2026-07' },
+      { id:'r4', name:'Internet', value:9990, day:20, note:'', startMonth:'2026-07' }
+    ],
+    oneOffBills: {
+      '2026-07': [
+        { id:'b1', name:'Luz', value:20000, due:'2026-07-23', note:'', paid:false },
+        { id:'b2', name:'Teste2', value:5100, due:'2026-07-23', note:'', paid:false }
+      ]
+    },
+    recurringStatus: {
+      r4: { '2026-07': true }
+    },
+    recurringOverrides: {},
+    installments: [],
+    installmentStatus: {},
+    installmentOverrides: {},
+    fcmTokens: []
+  };
+}
+
+const LOCAL_CACHE_KEY = 'fincontrol_state_cache';
+
+function applyStateFromData(data){
+  state = {
+    currentMonth: data.currentMonth || monthKey(new Date()),
+    recurring: data.recurring || [],
+    oneOffBills: data.oneOffBills || {},
+    recurringStatus: data.recurringStatus || {},
+    recurringOverrides: data.recurringOverrides || {},
+    installments: data.installments || [],
+    installmentStatus: data.installmentStatus || {},
+    installmentOverrides: data.installmentOverrides || {},
+    fcmTokens: data.fcmTokens || []
+  };
+  saveLocalCache();
+}
+
+function saveLocalCache(){
+  try{
+    localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(state));
+  }catch(e){
+    // localStorage indisponível ou cheio — sem problema, só não cacheia.
+  }
+}
+
+/**
+ * Lê o último estado salvo localmente (localStorage), de forma síncrona.
+ * Ao contrário do cache do Firestore, isso é sempre confiável (não depende
+ * de IndexedDB, que pode falhar silenciosamente em PWA no iOS/Safari).
+ */
+function loadLocalCache(){
+  try{
+    const raw = localStorage.getItem(LOCAL_CACHE_KEY);
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    state = {
+      currentMonth: data.currentMonth || monthKey(new Date()),
+      recurring: data.recurring || [],
+      oneOffBills: data.oneOffBills || {},
+      recurringStatus: data.recurringStatus || {},
+      recurringOverrides: data.recurringOverrides || {},
+      fcmTokens: data.fcmTokens || []
+    };
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+/**
+ * Carrega os dados e desenha a tela em duas etapas:
+ * 1) Do cache local (instantâneo, sem rede) — se já existir.
+ * 2) Do servidor, por trás, atualizando a tela se algo mudou.
+ * Isso evita a tela ficar esperando a rede toda vez que o app abre.
+ */
+async function loadState(){
+  const ref = doc(db, 'users', currentUid);
+  let haveData = false;
+
+  try{
+    const cacheSnap = await getDocFromCache(ref);
+    if(cacheSnap.exists()){
+      applyStateFromData(cacheSnap.data());
+      state.currentMonth = monthKey(new Date());
+      renderMonth();
+      renderRecurring();
+      haveData = true;
+    }
+  }catch(e){
+    // Sem nada em cache ainda (ex: primeira vez neste aparelho) — segue normalmente.
+  }
+
+  try{
+    const snap = await getDoc(ref);
+    if(snap.exists()){
+      applyStateFromData(snap.data());
+      state.currentMonth = monthKey(new Date());
+      if(haveData){ renderMonth(); renderRecurring(); }
+    }else if(!haveData){
+      throw new Error('sem dados salvos no Firestore');
+    }
+  }catch(e){
+    if(!haveData){
+      console.error('Erro ao carregar do Firestore, usando dados iniciais:', e);
+      state = seedData();
+      await saveState();
+    }
+  }
+}
+
+async function saveState(){
+  saveLocalCache();
+  if(!currentUid) return;
+  try{
+    await setDoc(doc(db, 'users', currentUid), {
+      currentMonth: state.currentMonth,
+      recurring: state.recurring,
+      oneOffBills: state.oneOffBills,
+      recurringStatus: state.recurringStatus,
+      recurringOverrides: state.recurringOverrides,
+      installments: state.installments || [],
+      installmentStatus: state.installmentStatus || {},
+      installmentOverrides: state.installmentOverrides || {},
+      fcmTokens: state.fcmTokens || []
+    });
+  }catch(e){
+    console.error('Erro ao salvar no Firestore:', e);
+    showToast('Não foi possível sincronizar — verifique sua conexão');
+  }
+}
+
+function uid(){ return 'id_' + Math.random().toString(36).slice(2,10); }
+
+/**
+ * Retorna a lista "achatada" de contas de um mês: as manuais (oneOffBills)
+ * mais as recorrentes computadas na hora a partir do cadastro.
+ */
+function getMonthBills(monthKey){
+  const manual = (state.oneOffBills[monthKey] || []).map(b => ({ ...b, origin:'manual' }));
+  const recurring = state.recurring
+    .filter(r => r.startMonth <= monthKey)
+    .map(r => {
+      const day = pad2(Math.min(r.day, 28));
+      const override = (state.recurringOverrides[r.id] && state.recurringOverrides[r.id][monthKey]) || null;
+      const paid = !!(state.recurringStatus[r.id] && state.recurringStatus[r.id][monthKey]);
+      const value = override && override.value !== undefined ? override.value : r.value;
+      const note = override && override.note !== undefined ? override.note : r.note;
+      return {
+        id: `rec_${r.id}_${monthKey}`, templateId: r.id, name: r.name, value,
+        due: `${monthKey}-${day}`, note, paid, origin:'recurring', hasOverride: !!override
+      };
+    });
+  const installments = (state.installments || [])
+    .map(p => {
+      const idx = monthsDiff(p.startMonth, monthKey);
+      if(idx < 0 || idx >= p.totalInstallments) return null;
+      const day = pad2(Math.min(p.day, 28));
+      const override = (state.installmentOverrides[p.id] && state.installmentOverrides[p.id][monthKey]) || null;
+      const paid = !!(state.installmentStatus[p.id] && state.installmentStatus[p.id][monthKey]);
+      const value = override && override.value !== undefined ? override.value : p.value;
+      const note = override && override.note !== undefined ? override.note : (p.note || '');
+      return {
+        id: `inst_${p.id}_${monthKey}`, templateId: p.id, name: `${p.name} (${idx+1}/${p.totalInstallments})`,
+        value, due: `${monthKey}-${day}`, note, paid, origin:'installment', hasOverride: !!override,
+        installmentIndex: idx, totalInstallments: p.totalInstallments
+      };
+    })
+    .filter(Boolean);
+  return [...manual, ...recurring, ...installments];
+}
+
+function monthsDiff(mkA, mkB){
+  const [yA, mA] = mkA.split('-').map(Number);
+  const [yB, mB] = mkB.split('-').map(Number);
+  return (yB - yA) * 12 + (mB - mA);
+}
+
+/* ==========================================================================
+   FORMATAÇÃO
+   ========================================================================== */
+function formatCentsToBRL(cents){
+  const v = (cents||0)/100;
+  return v.toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+}
+function formatDateBR(iso){
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}`;
+}
+function formatMonthLabel(key){
+  const [y,m] = key.split('-').map(Number);
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  return `${meses[m-1]} - ${y}`;
+}
+
+function attachCurrencyMask(input){
+  input.addEventListener('input', () => {
+    let digits = input.value.replace(/\D/g,'');
+    if(digits === ''){ input.value=''; input.dataset.cents='0'; return; }
+    digits = digits.replace(/^0+(?=\d)/,'');
+    const cents = parseInt(digits || '0', 10);
+    input.dataset.cents = String(cents);
+    input.value = formatCentsToBRL(cents);
+  });
+}
+function setCurrencyValue(input, cents){
+  if(cents === null || cents === undefined || cents === ''){ input.value=''; input.dataset.cents='0'; return; }
+  input.dataset.cents = String(cents);
+  input.value = formatCentsToBRL(cents);
+}
+function getCurrencyCents(input){ return parseInt(input.dataset.cents || '0', 10) || 0; }
+
+function billStatus(bill){
+  if(bill.paid) return 'paid';
+  const due = new Date(bill.due + 'T00:00:00');
+  return due < todayISO() ? 'late' : 'pending';
+}
+
+/* Ícone por categoria (baseado no nome da conta) */
+const ICONS = {
+  water: `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.7s6 6.5 6 11a6 6 0 01-12 0c0-4.5 6-11 6-11z"/></svg>`,
+  card: `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>`,
+  bulb: `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 00-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0012 2z"/></svg>`,
+  wifi: `<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13a10 10 0 0114 0M8.5 16.5a5 5 0 017 0"/><circle cx="12" cy="20" r="1" fill="currentColor" stroke="none"/></svg>`,
+  home: `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>`,
+  receipt: `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>`
+};
+function billIcon(name){
+  const n = (name||'').toLowerCase();
+  if(n.includes('água') || n.includes('agua')) return ICONS.water;
+  if(n.includes('cart')) return ICONS.card;
+  if(n.includes('luz') || n.includes('energia') || n.includes('elétr') || n.includes('eletr')) return ICONS.bulb;
+  if(n.includes('internet') || n.includes('wifi') || n.includes('wi-fi')) return ICONS.wifi;
+  if(n.includes('aluguel') || n.includes('casa') || n.includes('condom')) return ICONS.home;
+  return ICONS.receipt;
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+/* ==========================================================================
+   RENDER — CONTAS DO MÊS
+   ========================================================================== */
+const SWIPE_ACTIONS_WIDTH = 132;
+const MESES_ABREV = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+function renderMonthStrip(){
+  const track = document.getElementById('monthStripTrack');
+  track.innerHTML = '';
+  for(let offset = -2; offset <= 2; offset++){
+    const mk = offset === 0 ? state.currentMonth : addMonths(state.currentMonth, offset);
+    const [y, m] = mk.split('-').map(Number);
+    const point = document.createElement('button');
+    point.type = 'button';
+    point.className = 'month-point' + (offset === 0 ? ' active' : '');
+    point.dataset.month = mk;
+    if(offset === 0){
+      point.innerHTML = `<span class="month-point-circle">${MESES_ABREV[m-1]}<br>${y}</span>`;
+      const input = document.createElement('input');
+      input.type = 'month';
+      input.className = 'chip-month-input';
+      input.value = mk;
+      input.addEventListener('click', ()=>{ if(input.showPicker){ try{ input.showPicker(); }catch(e){} } });
+      input.addEventListener('change', (e)=> goToMonth(e.target.value));
+      point.appendChild(input);
+    }else{
+      point.innerHTML = `<span class="month-point-label">${MESES_ABREV[m-1]}<br>${y}</span><span class="month-point-dot"></span>`;
+    }
+    track.appendChild(point);
+  }
+}
+
+/**
+ * Lista compacta com TODAS as contas cadastradas (recorrentes e parceladas)
+ * — diferente da lista do mês, que só mostra as ocorrências. Pras
+ * parceladas, mostra o valor TOTAL (parcela x quantidade), não só a parcela.
+ */
+function renderRegistryList(){
+  const container = document.getElementById('registryList');
+  container.innerHTML = '';
+
+  const recurringRows = state.recurring.map(rec => `
+    <div class="registry-row">
+      <div class="registry-avatar">${billIcon(rec.name)}</div>
+      <div class="registry-info">
+        <div class="registry-name">${escapeHtml(rec.name)}</div>
+        <div class="registry-sub">Recorrente · vence dia ${rec.day}</div>
+      </div>
+      <div class="registry-right">
+        <div class="registry-value">${formatCentsToBRL(rec.value)}</div>
+        <div class="registry-tag">por mês</div>
+      </div>
+    </div>
+  `);
+
+  const realCurrentMonth = monthKey(new Date());
+  const installmentRows = (state.installments || []).map(inst => {
+    const idx = Math.max(0, Math.min(inst.totalInstallments - 1, monthsDiff(inst.startMonth, realCurrentMonth)));
+    const total = inst.value * inst.totalInstallments;
+
+    let paidCount = 0, paidTotal = 0;
+    for(let i = 0; i < inst.totalInstallments; i++){
+      const mk = addMonths(inst.startMonth, i);
+      const isPaid = !!(state.installmentStatus[inst.id] && state.installmentStatus[inst.id][mk]);
+      if(isPaid){
+        const override = state.installmentOverrides[inst.id] && state.installmentOverrides[inst.id][mk];
+        const value = override && override.value !== undefined ? override.value : inst.value;
+        paidCount++;
+        paidTotal += value;
+      }
+    }
+
+    return `
+      <div class="registry-row">
+        <div class="registry-avatar">${billIcon(inst.name)}</div>
+        <div class="registry-info">
+          <div class="registry-name">${escapeHtml(inst.name)}</div>
+          <div class="registry-sub">Parcelado · ${idx+1}/${inst.totalInstallments} · ${formatCentsToBRL(inst.value)} por mês</div>
+          <div class="registry-sub">Pago até agora: ${formatCentsToBRL(paidTotal)} (${paidCount}/${inst.totalInstallments})</div>
+        </div>
+        <div class="registry-right">
+          <div class="registry-value">${formatCentsToBRL(total)}</div>
+          <div class="registry-tag">total</div>
+        </div>
+      </div>
+    `;
+  });
+
+  const rows = [...recurringRows, ...installmentRows];
+  container.innerHTML = rows.length
+    ? rows.join('')
+    : `<div class="registry-empty">Nenhuma conta recorrente ou parcelada cadastrada ainda.</div>`;
+}
+
+document.getElementById('registryToggle').addEventListener('click', ()=>{
+  const btn = document.getElementById('registryToggle');
+  const list = document.getElementById('registryList');
+  const isOpen = !list.classList.contains('hidden');
+  list.classList.toggle('hidden', isOpen);
+  btn.classList.toggle('open', !isOpen);
+});
+
+function renderMonth(){
+  renderMonthStrip();
+
+  const list = getMonthBills(state.currentMonth);
+  const sorted = [...list].sort((a,b)=> a.due.localeCompare(b.due));
+
+  let toPay = 0, paidSum = 0;
+  list.forEach(b => { if(b.paid) paidSum += b.value; else toPay += b.value; });
+  document.getElementById('totalToPay').textContent = formatCentsToBRL(toPay);
+  document.getElementById('totalPaid').textContent = formatCentsToBRL(paidSum);
+
+  const container = document.getElementById('billsList');
+  container.innerHTML = '';
+
+  if(sorted.length === 0){
+    container.innerHTML = `<div class="empty-state"><div class="icon"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6M9 9h1"/></svg></div>Nenhuma conta neste mês.<br>Toque no botão "+" para adicionar.</div>`;
+    return;
+  }
+
+  // Cards em destaque: TODAS as contas (não pagas) que vencem hoje — pode ser mais de uma.
+  const todayStr = (()=>{ const t=todayISO(); return `${t.getFullYear()}-${pad2(t.getMonth()+1)}-${pad2(t.getDate())}`; })();
+  const highlightBills = sorted.filter(b => !b.paid && b.due === todayStr);
+  const highlightIds = new Set(highlightBills.map(b=>b.id));
+  const rest = highlightBills.length ? sorted.filter(b => !highlightIds.has(b.id)) : sorted;
+
+  highlightBills.forEach(bill => {
+    const card = document.createElement('div');
+    card.className = 'bill-highlight';
+    card.dataset.more = bill.id;
+    card.dataset.origin = bill.origin;
+    card.dataset.templateId = bill.templateId || '';
+    card.dataset.name = bill.name;
+    card.dataset.paid = '0';
+    card.innerHTML = `
+      <div class="bill-highlight-header">
+        <div class="bill-highlight-badge">Vence hoje</div>
+        <div class="bill-highlight-value">${bill.value ? formatCentsToBRL(bill.value) : '—'}</div>
+      </div>
+      <div class="bill-highlight-top">
+        <div class="bill-highlight-avatar">${billIcon(bill.name)}</div>
+        <div class="bill-highlight-info">
+          <div class="bill-highlight-name">${escapeHtml(bill.name)}</div>
+          <div class="bill-highlight-due">Vence em ${formatDateBR(bill.due)}</div>
+        </div>
+        <button class="bill-highlight-pay" data-pay="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}">
+          Pagar agora
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  rest.forEach(bill => {
+    const status = billStatus(bill);
+    const pillLabel = status === 'late' ? 'Atrasada' : status === 'pending' ? 'Pendente' : 'Paga';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'bill-swipe-wrap';
+    wrap.innerHTML = `
+      <div class="bill-swipe-actions">
+        <button class="swipe-btn swipe-more" data-more="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}" data-paid="${bill.paid?'1':'0'}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg>
+          <span>Mais</span>
+        </button>
+        ${status === 'paid'
+          ? `<button class="swipe-btn swipe-pay undo" data-undo="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1015-6.7L3 13"/></svg><span>Desfazer</span></button>`
+          : `<button class="swipe-btn swipe-pay" data-pay="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg><span>Pagar</span></button>`}
+      </div>
+      <div class="bill-card bill-swipe-card status-${status}" data-swipe-card>
+        <div class="bill-top">
+          <div class="bill-avatar">${billIcon(bill.name)}</div>
+          <div class="bill-info">
+            <div class="bill-name">${escapeHtml(bill.name)}</div>
+            <div class="bill-due">Vence em ${formatDateBR(bill.due)}${bill.hasOverride ? ' · valor ajustado' : ''}</div>
+          </div>
+          <div class="bill-right">
+            <div class="bill-value">${bill.value ? formatCentsToBRL(bill.value) : '—'}</div>
+            <div class="bill-status ${status}">${pillLabel}</div>
+          </div>
+        </div>
+      </div>
+    `;
+    container.appendChild(wrap);
+  });
+}
+
+/* ==========================================================================
+   ARRASTAR PRO LADO (swipe) — revela "Mais" (⋯) e "Pagar/Desfazer"
+   ========================================================================== */
+let swipeState = null; // { el, wrap, startX, startY, baseX, currentX, phase, moved }
+let openSwipeWrap = null;
+const SWIPE_LOCK_THRESHOLD = 8; // px de movimento antes de decidir horizontal x vertical
+
+function closeOpenSwipe(){
+  if(openSwipeWrap){
+    const cardEl = openSwipeWrap.querySelector('[data-swipe-card]');
+    if(cardEl){
+      cardEl.style.transition = 'transform .2s ease';
+      cardEl.style.transform = 'translateX(0px)';
+      cardEl.classList.remove('swiped-open');
+    }
+    openSwipeWrap = null;
+  }
+}
+
+document.getElementById('billsList').addEventListener('pointerdown', (e)=>{
+  const cardEl = e.target.closest('[data-swipe-card]');
+  if(!cardEl) return;
+  const wrap = cardEl.closest('.bill-swipe-wrap');
+  if(openSwipeWrap && openSwipeWrap !== wrap) closeOpenSwipe();
+  const currentTransform = cardEl.style.transform;
+  const baseX = currentTransform ? parseFloat(currentTransform.replace(/[^-\d.]/g,'')) || 0 : 0;
+  // "pending": ainda não sabemos se é arrasto horizontal (swipe) ou vertical (rolar a página)
+  swipeState = { el: cardEl, wrap, startX: e.clientX, startY: e.clientY, baseX, currentX: baseX, phase: 'pending', moved: false, pointerId: e.pointerId };
+  cardEl.style.transition = 'none';
+});
+
+document.getElementById('billsList').addEventListener('pointermove', (e)=>{
+  if(!swipeState) return;
+  const deltaX = e.clientX - swipeState.startX;
+  const deltaY = e.clientY - swipeState.startY;
+
+  if(swipeState.phase === 'pending'){
+    if(Math.abs(deltaX) < SWIPE_LOCK_THRESHOLD && Math.abs(deltaY) < SWIPE_LOCK_THRESHOLD) return;
+    if(Math.abs(deltaX) > Math.abs(deltaY)){
+      swipeState.phase = 'horizontal';
+      swipeState.el.setPointerCapture && swipeState.el.setPointerCapture(swipeState.pointerId);
+    }else{
+      swipeState.phase = 'vertical';
+      return; // deixa o navegador rolar a página normalmente
+    }
+  }
+
+  if(swipeState.phase !== 'horizontal') return;
+  e.preventDefault();
+  swipeState.moved = true;
+  let newX = swipeState.baseX + deltaX;
+  newX = Math.max(-SWIPE_ACTIONS_WIDTH, Math.min(0, newX));
+  swipeState.currentX = newX;
+  swipeState.el.style.transform = `translateX(${newX}px)`;
+  swipeState.el.classList.toggle('swiped-open', newX < 0);
+}, { passive: false });
+
+function endSwipe(){
+  if(!swipeState) return;
+  const { el, wrap, currentX, moved, phase } = swipeState;
+  justDragged = moved && phase === 'horizontal';
+  if(phase === 'horizontal'){
+    el.style.transition = 'transform .2s ease';
+    if(currentX < -SWIPE_ACTIONS_WIDTH * 0.5){
+      el.style.transform = `translateX(${-SWIPE_ACTIONS_WIDTH}px)`;
+      el.classList.add('swiped-open');
+      openSwipeWrap = wrap;
+    }else{
+      el.style.transform = 'translateX(0px)';
+      el.classList.remove('swiped-open');
+      if(openSwipeWrap === wrap) openSwipeWrap = null;
+    }
+  }
+  swipeState = null;
+}
+document.getElementById('billsList').addEventListener('pointerup', endSwipe);
+document.getElementById('billsList').addEventListener('pointercancel', endSwipe);
+
+
+
+/* ==========================================================================
+   RENDER — CONTAS RECORRENTES
+   ========================================================================== */
+function renderRecurring(){
+  renderRegistryList();
+  const list = state.recurring;
+  document.getElementById('recCount').textContent = list.length;
+  const total = list.reduce((s,r)=> s + (r.value||0), 0);
+  document.getElementById('recTotal').textContent = formatCentsToBRL(total);
+
+  const container = document.getElementById('recurringList');
+  container.innerHTML = '';
+
+  if(list.length === 0){
+    container.innerHTML = `<div class="empty-state"><div class="icon"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg></div>Nenhuma conta recorrente cadastrada.</div>`;
+    return;
+  }
+
+  list.forEach(rec => {
+    const card = document.createElement('div');
+    card.className = 'rec-card';
+    card.innerHTML = `
+      <div class="bill-avatar">${billIcon(rec.name)}</div>
+      <div class="info">
+        <div class="name">${escapeHtml(rec.name)}</div>
+        <div class="sub">Vence dia ${rec.day}${rec.note ? ' · ' + escapeHtml(rec.note) : ''}</div>
+      </div>
+      <div class="value">${rec.value ? formatCentsToBRL(rec.value) : '—'}</div>
+      <div class="rec-actions">
+        <button class="icon-action" data-edit-rec="${rec.id}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
+        </button>
+        <button class="icon-action" data-del-rec="${rec.id}" data-name="${escapeHtml(rec.name)}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6h16z"/></svg>
+        </button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+/* ==========================================================================
+   MODAIS — controle genérico
+   ========================================================================== */
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+document.querySelectorAll('[data-close]').forEach(btn=>{ btn.addEventListener('click', ()=> closeModal(btn.dataset.close)); });
+document.querySelectorAll('.overlay').forEach(ov=>{ ov.addEventListener('click', (e)=>{ if(e.target === ov) closeModal(ov.id); }); });
+
+function showToast(msg, isError){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = isError ? '#c0342f' : '';
+  t.classList.add('show');
+  if(isError){
+    t.onclick = () => t.classList.remove('show');
+  }else{
+    setTimeout(()=> t.classList.remove('show'), 2200);
+  }
+}
+
+/* ==========================================================================
+   NAVEGAÇÃO DE BAIXO (Contas do mês / Recorrentes)
+   ========================================================================== */
+document.querySelectorAll('.bottom-nav-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> setView(btn.dataset.view));
+});
+function setView(view){
+  document.getElementById('viewMonth').classList.toggle('hidden', view !== 'month');
+  document.getElementById('viewRecurring').classList.toggle('hidden', view !== 'recurring');
+  document.getElementById('btnNewBill').classList.toggle('hidden', view !== 'month');
+  if(view === 'month' && state){
+    state.currentMonth = monthKey(new Date());
+    renderMonth();
+  }
+  if(view === 'recurring' && state){
+    renderRecurring();
+  }
+  document.querySelectorAll('.bottom-nav-btn').forEach(b=>{
+    const isActive = b.dataset.view === view;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-selected', String(isActive));
+  });
+}
+
+/* ==========================================================================
+   NAVEGAÇÃO DE MÊS
+   ========================================================================== */
+function goToMonth(key){
+  state.currentMonth = key;
+  renderMonth();
+  saveState();
+}
+document.getElementById('prevMonth').addEventListener('click', ()=> goToMonth(addMonths(state.currentMonth,-1)));
+document.getElementById('nextMonth').addEventListener('click', ()=> goToMonth(addMonths(state.currentMonth,1)));
+
+document.getElementById('monthStripTrack').addEventListener('click', (e)=>{
+  const point = e.target.closest('.month-point');
+  if(!point || point.classList.contains('active')) return;
+  goToMonth(point.dataset.month);
+});
+
+/* ==========================================================================
+   FORM — NOVA / EDITAR CONTA DO MÊS (manual)
+   ========================================================================== */
+const billNameEl = document.getElementById('billName');
+const billValueEl = document.getElementById('billValue');
+const billDueEl = document.getElementById('billDue');
+const billNoteEl = document.getElementById('billNote');
+const billInstallmentRow = document.getElementById('billInstallmentRow');
+const billInstallmentField = document.getElementById('billInstallmentField');
+const billInstallmentToggle = document.getElementById('billInstallmentToggle');
+const billInstallmentCountEl = document.getElementById('billInstallmentCount');
+attachCurrencyMask(billValueEl);
+let editingBillId = null;
+let editingOverride = null; // { templateId, monthKey } quando estamos ajustando só o mês atual
+let editingInstallmentId = null; // vestigial, não usado mais (edição virou por mês)
+let editingInstallmentOverride = null; // { templateId, monthKey } quando estamos ajustando só uma parcela
+
+billInstallmentToggle.addEventListener('change', ()=>{
+  billInstallmentField.classList.toggle('hidden', !billInstallmentToggle.checked);
+});
+
+function openEditRecurringOverride(bill){
+  editingBillId = null;
+  editingOverride = null;
+  editingInstallmentId = null;
+  editingInstallmentOverride = null;
+  editingOverride = { templateId: bill.templateId, monthKey: state.currentMonth };
+  document.getElementById('modalBillTitle').textContent = 'Ajustar valor deste mês';
+  document.getElementById('billSubmit').textContent = 'Salvar';
+  billNameEl.value = bill.name; billNameEl.disabled = true;
+  setCurrencyValue(billValueEl, bill.value);
+  billDueEl.value = bill.due; billDueEl.disabled = true;
+  billNoteEl.value = bill.note || '';
+  billInstallmentRow.classList.add('hidden');
+  billInstallmentField.classList.add('hidden');
+  billInstallmentToggle.checked = false;
+  openModal('modalBill');
+}
+
+document.getElementById('btnNewBill').addEventListener('click', ()=>{
+  editingBillId = null;
+  editingOverride = null;
+  editingInstallmentId = null;
+  editingInstallmentOverride = null;
+  document.getElementById('modalBillTitle').textContent = 'Nova conta';
+  document.getElementById('billSubmit').textContent = 'Adicionar';
+  billNameEl.value = ''; billNameEl.disabled = false;
+  setCurrencyValue(billValueEl, null);
+  const today = todayISO();
+  billDueEl.value = `${today.getFullYear()}-${pad2(today.getMonth()+1)}-${pad2(today.getDate())}`;
+  billDueEl.disabled = false;
+  billNoteEl.value = '';
+  billInstallmentRow.classList.remove('hidden');
+  billInstallmentToggle.checked = false;
+  billInstallmentField.classList.add('hidden');
+  billInstallmentCountEl.value = '';
+  document.getElementById('billInstallmentFieldLabel').textContent = 'Quantidade de parcelas';
+  openModal('modalBill');
+});
+
+function openEditBill(id){
+  const bill = (state.oneOffBills[state.currentMonth]||[]).find(b=>b.id===id);
+  if(!bill) return;
+  editingBillId = id;
+  editingOverride = null;
+  editingInstallmentId = null;
+  editingInstallmentOverride = null;
+  document.getElementById('modalBillTitle').textContent = 'Editar conta';
+  document.getElementById('billSubmit').textContent = 'Salvar';
+  billNameEl.value = bill.name; billNameEl.disabled = false;
+  setCurrencyValue(billValueEl, bill.value);
+  billDueEl.value = bill.due; billDueEl.disabled = false;
+  billNoteEl.value = bill.note || '';
+  billInstallmentRow.classList.add('hidden');
+  billInstallmentField.classList.add('hidden');
+  billInstallmentToggle.checked = false;
+  openModal('modalBill');
+}
+
+function openEditInstallmentOverride(bill){
+  editingBillId = null;
+  editingOverride = null;
+  editingInstallmentId = null;
+  editingInstallmentOverride = { templateId: bill.templateId, monthKey: state.currentMonth };
+  document.getElementById('modalBillTitle').textContent = 'Editar esta parcela';
+  document.getElementById('billSubmit').textContent = 'Salvar';
+  const baseName = bill.name.replace(/\s*\(\d+\/\d+\)$/, '');
+  billNameEl.value = baseName; billNameEl.disabled = true;
+  setCurrencyValue(billValueEl, bill.value);
+  billDueEl.value = bill.due; billDueEl.disabled = true;
+  billNoteEl.value = bill.note || '';
+  billInstallmentRow.classList.add('hidden');
+  billInstallmentField.classList.remove('hidden');
+  document.getElementById('billInstallmentFieldLabel').textContent =
+    `Total de parcelas (esta é a parcela ${bill.installmentIndex + 1})`;
+  billInstallmentCountEl.value = bill.totalInstallments;
+  openModal('modalBill');
+}
+
+document.getElementById('billSubmit').addEventListener('click', ()=>{
+  if(editingOverride){
+    const value = getCurrencyCents(billValueEl);
+    const note = billNoteEl.value.trim();
+    if(!state.recurringOverrides[editingOverride.templateId]) state.recurringOverrides[editingOverride.templateId] = {};
+    state.recurringOverrides[editingOverride.templateId][editingOverride.monthKey] = { value, note };
+    saveState();
+    renderMonth();
+    closeModal('modalBill');
+    showToast('Valor deste mês atualizado');
+    editingOverride = null;
+    return;
+  }
+
+  if(editingInstallmentOverride){
+    const inst = (state.installments || []).find(p => p.id === editingInstallmentOverride.templateId);
+    if(inst){
+      const value = getCurrencyCents(billValueEl);
+      const note = billNoteEl.value.trim();
+      if(!state.installmentOverrides[editingInstallmentOverride.templateId]) state.installmentOverrides[editingInstallmentOverride.templateId] = {};
+      state.installmentOverrides[editingInstallmentOverride.templateId][editingInstallmentOverride.monthKey] = { value, note };
+
+      const count = parseInt(billInstallmentCountEl.value, 10);
+      if(!count || count < 1){ showToast('Informe uma quantidade de parcelas válida'); return; }
+      inst.totalInstallments = count;
+    }
+    saveState();
+    renderMonth();
+    closeModal('modalBill');
+    showToast('Parcela atualizada');
+    editingInstallmentOverride = null;
+    return;
+  }
+
+  const name = billNameEl.value.trim();
+  if(!name){ showToast('Informe um nome para a conta'); return; }
+  if(!billDueEl.value){ showToast('Informe a data de vencimento'); return; }
+  const value = getCurrencyCents(billValueEl);
+  const due = billDueEl.value;
+
+  if(!editingBillId && billInstallmentToggle.checked){
+    const count = parseInt(billInstallmentCountEl.value, 10);
+    if(!count || count < 2){ showToast('Informe uma quantidade de parcelas válida (mínimo 2)'); return; }
+    if(!state.installments) state.installments = [];
+    state.installments.push({
+      id: uid(), name, value, day: parseInt(due.slice(8,10),10),
+      note: billNoteEl.value.trim(), startMonth: due.slice(0,7), totalInstallments: count
+    });
+    saveState();
+    renderMonth();
+    closeModal('modalBill');
+    showToast('Conta parcelada criada');
+    return;
+  }
+
+  const dueMonth = due.slice(0,7);
+  if(!state.oneOffBills[dueMonth]) state.oneOffBills[dueMonth] = [];
+
+  if(editingBillId){
+    const arr = state.oneOffBills[state.currentMonth] || [];
+    const idx = arr.findIndex(b=>b.id===editingBillId);
+    if(idx>-1){
+      const bill = arr[idx];
+      bill.name=name; bill.value=value; bill.due=due; bill.note=billNoteEl.value.trim();
+      if(dueMonth !== state.currentMonth){
+        arr.splice(idx,1);
+        state.oneOffBills[dueMonth].push(bill);
+      }
+    }
+  }else{
+    state.oneOffBills[dueMonth].push({ id:uid(), name, value, due, note:billNoteEl.value.trim(), paid:false });
+  }
+  saveState();
+  renderMonth();
+  closeModal('modalBill');
+  showToast('Conta salva com sucesso');
+});
+
+/* ==========================================================================
+   FORM — NOVA / EDITAR CONTA RECORRENTE
+   -------------------------------------------------------------------------
+   Editar aqui reflete AUTOMATICAMENTE em todos os meses (passados e
+   futuros), pois as contas recorrentes são calculadas na hora.
+   ========================================================================== */
+const recNameEl = document.getElementById('recName');
+const recValueEl = document.getElementById('recValue');
+const recDayEl = document.getElementById('recDay');
+const recNoteEl = document.getElementById('recNote');
+attachCurrencyMask(recValueEl);
+let editingRecId = null;
+
+document.getElementById('btnNewRecurring').addEventListener('click', ()=>{
+  editingRecId = null;
+  document.getElementById('modalRecTitle').textContent = 'Nova conta recorrente';
+  document.getElementById('recSubmit').textContent = 'Adicionar';
+  recNameEl.value=''; setCurrencyValue(recValueEl,null); recDayEl.value=''; recNoteEl.value='';
+  openModal('modalRecurring');
+});
+
+function openEditRec(id){
+  const rec = state.recurring.find(r=>r.id===id);
+  if(!rec) return;
+  editingRecId = id;
+  document.getElementById('modalRecTitle').textContent = 'Editar conta recorrente';
+  document.getElementById('recSubmit').textContent = 'Salvar';
+  recNameEl.value = rec.name;
+  setCurrencyValue(recValueEl, rec.value);
+  recDayEl.value = rec.day;
+  recNoteEl.value = rec.note || '';
+  openModal('modalRecurring');
+}
+
+recDayEl.addEventListener('input', ()=>{
+  let v = recDayEl.value.replace(/\D/g,'');
+  if(v !== ''){ let n = parseInt(v,10); if(n > 31) n = 31; v = String(n); }
+  recDayEl.value = v;
+});
+
+document.getElementById('recSubmit').addEventListener('click', ()=>{
+  const name = recNameEl.value.trim();
+  const day = parseInt(recDayEl.value,10);
+  if(!name){ showToast('Informe um nome para a conta'); return; }
+  if(!day || day<1 || day>31){ showToast('Informe um dia de vencimento válido'); return; }
+  const value = getCurrencyCents(recValueEl);
+  const note = recNoteEl.value.trim();
+
+  if(editingRecId){
+    const rec = state.recurring.find(r=>r.id===editingRecId);
+    if(rec){ rec.name=name; rec.value=value; rec.day=day; rec.note=note; }
+  }else{
+    state.recurring.push({ id:uid(), name, value, day, note, startMonth: state.currentMonth });
+  }
+  saveState();
+  renderRecurring();
+  renderMonth();
+  closeModal('modalRecurring');
+  showToast('Conta recorrente salva');
+});
+
+/* ==========================================================================
+   PAGAR / DESFAZER
+   ========================================================================== */
+let payingBill = null;
+function openPayModal(id, origin, templateId, name){
+  payingBill = { id, origin, templateId, name };
+  document.getElementById('payBillName').textContent = name;
+  openModal('modalPay');
+}
+document.getElementById('payConfirm').addEventListener('click', ()=>{
+  if(!payingBill) return;
+  if(payingBill.origin === 'manual'){
+    const bill = (state.oneOffBills[state.currentMonth]||[]).find(b=>b.id===payingBill.id);
+    if(bill) bill.paid = true;
+  }else if(payingBill.origin === 'installment'){
+    if(!state.installmentStatus[payingBill.templateId]) state.installmentStatus[payingBill.templateId] = {};
+    state.installmentStatus[payingBill.templateId][state.currentMonth] = true;
+  }else{
+    if(!state.recurringStatus[payingBill.templateId]) state.recurringStatus[payingBill.templateId] = {};
+    state.recurringStatus[payingBill.templateId][state.currentMonth] = true;
+  }
+  saveState();
+  renderMonth();
+  closeModal('modalPay');
+  showToast('Conta marcada como paga');
+});
+
+let undoingBill = null;
+function openUndoModal(id, origin, templateId, name){
+  undoingBill = { id, origin, templateId, name };
+  document.getElementById('undoBillName').textContent = name;
+  openModal('modalUndo');
+}
+document.getElementById('undoConfirm').addEventListener('click', ()=>{
+  if(!undoingBill) return;
+  if(undoingBill.origin === 'manual'){
+    const bill = (state.oneOffBills[state.currentMonth]||[]).find(b=>b.id===undoingBill.id);
+    if(bill) bill.paid = false;
+  }else if(undoingBill.origin === 'installment'){
+    if(state.installmentStatus[undoingBill.templateId]){
+      delete state.installmentStatus[undoingBill.templateId][state.currentMonth];
+    }
+  }else{
+    if(state.recurringStatus[undoingBill.templateId]){
+      delete state.recurringStatus[undoingBill.templateId][state.currentMonth];
+    }
+  }
+  saveState();
+  renderMonth();
+  closeModal('modalUndo');
+  showToast('Pagamento desfeito');
+});
+
+/* ==========================================================================
+   EXCLUIR
+   -------------------------------------------------------------------------
+   Excluir uma conta recorrente ou um parcelamento (pelo ícone numa conta do
+   mês) remove ele de TODOS os meses, porque não existem cópias — é só o
+   cadastro sendo apagado.
+   ========================================================================== */
+let deleteTarget = null; // { type:'bill'|'rec'|'installment', id, monthKey? }
+function openDeleteModal(type, id, name, monthKeyForBill){
+  deleteTarget = { type, id, monthKey: monthKeyForBill };
+  let msg;
+  if(type === 'rec') msg = `Deseja realmente excluir a conta recorrente "<b>${escapeHtml(name)}</b>"? Ela vai sumir de todos os meses (passados e futuros).`;
+  else if(type === 'installment') msg = `Deseja realmente excluir o parcelamento "<b>${escapeHtml(name)}</b>"? Todas as parcelas restantes (nos próximos meses) serão removidas.`;
+  else msg = `Deseja realmente excluir "<b>${escapeHtml(name)}</b>"? Esta ação não pode ser desfeita.`;
+  document.getElementById('deleteMessage').innerHTML = msg;
+  openModal('modalDelete');
+}
+document.getElementById('deleteConfirm').addEventListener('click', ()=>{
+  if(!deleteTarget) return;
+  if(deleteTarget.type === 'bill'){
+    const arr = state.oneOffBills[deleteTarget.monthKey] || [];
+    const idx = arr.findIndex(b=>b.id===deleteTarget.id);
+    if(idx>-1) arr.splice(idx,1);
+    if(arr.length === 0) delete state.oneOffBills[deleteTarget.monthKey];
+  }else if(deleteTarget.type === 'installment'){
+    const idx = (state.installments||[]).findIndex(p=>p.id===deleteTarget.id);
+    if(idx>-1) state.installments.splice(idx,1);
+    delete state.installmentStatus[deleteTarget.id];
+  }else{
+    const idx = state.recurring.findIndex(r=>r.id===deleteTarget.id);
+    if(idx>-1) state.recurring.splice(idx,1);
+    delete state.recurringStatus[deleteTarget.id];
+    delete state.recurringOverrides[deleteTarget.id];
+  }
+  saveState();
+  renderMonth();
+  renderRecurring();
+  closeModal('modalDelete');
+  showToast('Excluído com sucesso');
+  deleteTarget = null;
+});
+
+/* ==========================================================================
+   DELEGAÇÃO DE CLIQUES (listas)
+   ========================================================================== */
+let justDragged = false;
+
+document.getElementById('billsList').addEventListener('click', (e)=>{
+  const pay = e.target.closest('[data-pay]');
+  const undo = e.target.closest('[data-undo]');
+  const more = e.target.closest('[data-more]');
+  const swipeCard = e.target.closest('[data-swipe-card]');
+
+  if(pay){ justDragged = false; openPayModal(pay.dataset.pay, pay.dataset.origin, pay.dataset.templateId, pay.dataset.name); closeOpenSwipe(); return; }
+  if(undo){ justDragged = false; openUndoModal(undo.dataset.undo, undo.dataset.origin, undo.dataset.templateId, undo.dataset.name); closeOpenSwipe(); return; }
+  if(more){
+    justDragged = false;
+    openBillActionsSheet(more.dataset.more, more.dataset.origin, more.dataset.templateId, more.dataset.name, more.dataset.paid === '1');
+    return;
+  }
+
+  // Só chega aqui se o clique não foi em nenhum botão de ação — aí sim,
+  // se veio de um arrasto (fechar/abrir o swipe), ignora esse clique "fantasma".
+  if(justDragged){ justDragged = false; return; }
+
+  if(swipeCard){
+    const wrap = swipeCard.closest('.bill-swipe-wrap');
+    if(openSwipeWrap === wrap){ closeOpenSwipe(); }
+  }
+});
+
+document.addEventListener('click', (e)=>{
+  if(openSwipeWrap && !e.target.closest('.bill-swipe-wrap')){
+    closeOpenSwipe();
+  }
+});
+
+/* ==========================================================================
+   AÇÕES DE UMA CONTA (menu "Mais" revelado pelo swipe): Editar / Excluir
+   ========================================================================== */
+let billActionsTarget = null; // { id, origin, templateId, name, paid }
+
+function openBillActionsSheet(id, origin, templateId, name, paid){
+  billActionsTarget = { id, origin, templateId, name, paid };
+  closeOpenSwipe();
+  const editBtn = document.getElementById('billActionsEdit');
+  const delBtn = document.getElementById('billActionsDelete');
+  editBtn.classList.toggle('disabled', paid);
+  delBtn.classList.toggle('disabled', origin === 'recurring');
+  openModal('modalBillActions');
+}
+
+document.getElementById('billActionsEdit').addEventListener('click', ()=>{
+  if(!billActionsTarget) return;
+  if(billActionsTarget.paid){ showToast('Desfaça o pagamento para poder editar esta conta'); return; }
+  closeModal('modalBillActions');
+  const bill = getMonthBills(state.currentMonth).find(b=>b.id===billActionsTarget.id);
+  if(!bill) return;
+  if(bill.origin === 'recurring') openEditRecurringOverride(bill);
+  else if(bill.origin === 'installment') openEditInstallmentOverride(bill);
+  else openEditBill(bill.id);
+});
+
+document.getElementById('billActionsDelete').addEventListener('click', ()=>{
+  if(!billActionsTarget) return;
+  if(billActionsTarget.origin === 'recurring'){ showToast('Contas recorrentes só podem ser excluídas na aba "Recorrentes"'); return; }
+  closeModal('modalBillActions');
+  const bill = getMonthBills(state.currentMonth).find(b=>b.id===billActionsTarget.id);
+  if(!bill) return;
+  if(bill.origin === 'installment') openDeleteModal('installment', bill.templateId, bill.name.replace(/\s*\(\d+\/\d+\)$/,''), state.currentMonth);
+  else openDeleteModal('bill', bill.id, bill.name, state.currentMonth);
+});
+
+document.getElementById('recurringList').addEventListener('click', (e)=>{
+  const edit = e.target.closest('[data-edit-rec]');
+  const del = e.target.closest('[data-del-rec]');
+  if(edit) openEditRec(edit.dataset.editRec);
+  else if(del) openDeleteModal('rec', del.dataset.delRec, del.dataset.name);
+});
+
+/* ==========================================================================
+   SERVICE WORKER + FIREBASE CLOUD MESSAGING (100% automático)
+   ========================================================================== */
+let swRegistration = null;
+async function registerServiceWorker(){
+  if(!('serviceWorker' in navigator)) return null;
+  try{ swRegistration = await navigator.serviceWorker.register('/firebase-messaging-sw.js'); return swRegistration; }
+  catch(e){ console.error('Erro ao registrar firebase-messaging-sw.js:', e); return null; }
+}
+
+async function setupMessagingAndSaveToken(){
+  try{
+    const supported = await isMessagingSupported();
+    if(!supported){ showToast('Este navegador/app não suporta notificações push', true); return; }
+    if(!swRegistration) await registerServiceWorker();
+    if(!swRegistration){ showToast('Não foi possível registrar o service worker de notificações', true); return; }
+    fbMessaging = getMessaging(fbApp);
+    const token = await getToken(fbMessaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: swRegistration });
+    if(!token){ showToast('Não foi possível gerar o token de notificação', true); return; }
+    if(currentUid){
+      state.fcmTokens = [token];
+      await setDoc(doc(db, 'users', currentUid), { fcmTokens: [token] }, { merge: true });
+      showToast('Notificações configuradas com sucesso');
+    }
+    onMessage(fbMessaging, (payload) => {
+      const title = payload.data?.title || 'FinUp';
+      const body = payload.data?.body || '';
+      if(swRegistration){ swRegistration.showNotification(title, { body }); }
+      else{ showToast(body || title); }
+    });
+  }catch(e){
+    console.error('Erro ao configurar notificações push:', e);
+    showToast('Erro nas notificações: ' + (e && e.message ? e.message : e), true);
+  }
+}
+
+document.getElementById('btnBell').addEventListener('click', async ()=>{
+  if(!('Notification' in window)){ showToast('Este navegador não suporta notificações'); return; }
+  if(Notification.permission !== 'granted'){
+    try{
+      const perm = await Notification.requestPermission();
+      if(perm === 'granted'){ await setupMessagingAndSaveToken(); showToast('Notificações ativadas'); }
+      else{ showToast('Permita as notificações no navegador para recebê-las'); }
+    }catch(e){ console.error(e); }
+  }else{
+    showToast('Notificações já estão ativadas');
+  }
+});
+
+/* ==========================================================================
+   INICIALIZAÇÃO
+   ========================================================================== */
+function isStandaloneMode(){
+  return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+}
+function isIOS(){
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+async function init(){
+  // Pinta a tela na hora com o que já está salvo neste aparelho (localStorage),
+  // sem esperar autenticação nem rede — só depois disso é que fala com o Firebase.
+  if(loadLocalCache()){
+    state.currentMonth = monthKey(new Date());
+    renderMonth();
+    renderRecurring();
+    setView('month');
+  }
+
+  await ensureSignedIn();
+  await loadState();
+  state.currentMonth = monthKey(new Date());
+  renderMonth();
+  renderRecurring();
+  setView('month');
+
+  if(isIOS() && !isStandaloneMode()){
+    showToast('No iPhone, abra pelo ícone salvo na Tela de Início para receber notificações', true);
+  }
+
+  if('Notification' in window){
+    if(Notification.permission === 'granted'){
+      await setupMessagingAndSaveToken();
+    }else if(Notification.permission === 'default'){
+      // No Safari/iOS, pedir permissão sem um toque do usuário falha
+      // silenciosamente. Por isso pedimos aqui só um toque no sino.
+      showToast('Toque no sino no topo para ativar as notificações', true);
+    }
+  }
+}
+init();
+</script>
+</body>
+</html>
