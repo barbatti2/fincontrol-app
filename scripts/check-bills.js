@@ -30,6 +30,12 @@ function formatBRL(cents) {
   return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+function monthsDiff(mkA, mkB) {
+  const [yA, mA] = mkA.split('-').map(Number);
+  const [yB, mB] = mkB.split('-').map(Number);
+  return (yB - yA) * 12 + (mB - mA);
+}
+
 function getMonthBills(data, monthKey) {
   const manual = ((data.oneOffBills && data.oneOffBills[monthKey]) || []);
   const recurring = (data.recurring || [])
@@ -43,7 +49,20 @@ function getMonthBills(data, monthKey) {
       const value = override && override.value !== undefined ? override.value : r.value;
       return { name: r.name, value, due: `${monthKey}-${day}`, paid };
     });
-  return [...manual, ...recurring];
+  const installments = (data.installments || [])
+    .map((p) => {
+      const idx = monthsDiff(p.startMonth, monthKey);
+      if (idx < 0 || idx >= p.totalInstallments) return null;
+      const day = pad2(Math.min(p.day, 28));
+      const status = data.installmentStatus && data.installmentStatus[p.id];
+      const paid = !!(status && status[monthKey]);
+      const overrideMap = data.installmentOverrides && data.installmentOverrides[p.id];
+      const override = overrideMap && overrideMap[monthKey];
+      const value = override && override.value !== undefined ? override.value : p.value;
+      return { name: `${p.name} (${idx + 1}/${p.totalInstallments})`, value, due: `${monthKey}-${day}`, paid };
+    })
+    .filter(Boolean);
+  return [...manual, ...recurring, ...installments];
 }
 
 async function run() {
