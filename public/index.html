@@ -249,11 +249,12 @@
     display:flex; align-items:center; justify-content:center; flex-shrink:0;
   }
   .bill-highlight-info{ flex:1; min-width:0; }
-  .bill-highlight-name{ font-weight:800; font-size:16.5px; }
-  .bill-highlight-due{ font-size:12.5px; opacity:.85; margin-top:1px; }
+  .bill-highlight-name{ font-weight:800; font-size:16.5px; line-height:1.3; }
+  .bill-highlight-due{ font-size:12.5px; opacity:.85; margin-top:3px; }
+  .bill-highlight-divider{ height:1px; background:rgba(255,255,255,.16); margin:16px 0 14px; }
   .bill-highlight-pay{
-    background:#fff; color:var(--primary-dark); border:none; border-radius:11px; flex-shrink:0;
-    padding:11px 17px; font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center;
+    width:100%; background:#fff; color:var(--primary-dark); border:none; border-radius:13px;
+    padding:13px; font-weight:800; font-size:14.5px; display:flex; align-items:center; justify-content:center;
     gap:6px; cursor:pointer;
   }
   .bill-highlight-pay:active{ opacity:.88; }
@@ -1116,11 +1117,12 @@ function renderMonth(){
           <div class="bill-highlight-name">${escapeHtml(bill.name)}</div>
           <div class="bill-highlight-due">Vence em ${formatDateBR(bill.due)}</div>
         </div>
-        <button class="bill-highlight-pay" data-pay="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}">
-          Pagar agora
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        </button>
       </div>
+      <div class="bill-highlight-divider"></div>
+      <button class="bill-highlight-pay" data-pay="${bill.id}" data-origin="${bill.origin}" data-template-id="${bill.templateId||''}" data-name="${escapeHtml(bill.name)}">
+        Pagar agora
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
     `;
     container.appendChild(card);
   });
