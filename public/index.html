@@ -785,6 +785,9 @@ function loadLocalCache(){
       oneOffBills: data.oneOffBills || {},
       recurringStatus: data.recurringStatus || {},
       recurringOverrides: data.recurringOverrides || {},
+      installments: data.installments || [],
+      installmentStatus: data.installmentStatus || {},
+      installmentOverrides: data.installmentOverrides || {},
       fcmTokens: data.fcmTokens || []
     };
     return true;
